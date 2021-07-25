@@ -560,7 +560,6 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 		ema2 := utilities.EmovingAverage(candlesticks[num][3], "close", "1h", 50, fromTimestamp, toTimestamp, pairs[num])
 		macd1 := utilities.MACD(candlesticks[num][1], "close", 7, 7, 12, "5m", fromTimestamp, toTimestamp, pairs[num])
 		macd2 := utilities.MACD(candlesticks[num][1], "close", 18, 13, 25, "5m", fromTimestamp, toTimestamp, pairs[num])
-		rsi := utilities.RSI(candlesticks[num][1], "close", "5m", 14, fromTimestamp, toTimestamp, pairs[num])
 		var tableOfEMAs []*model.MovingAverage
 		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
 		var tableOfMACDs []*model.MACD
@@ -568,7 +567,6 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 		mycandlesticks = utilities.CandlesToMyCandles(candlesticks[num][1], indexstart[i], indexstop[i])
 		mycandlesticks = utilities.MergeEMA(mycandlesticks, tableOfEMAs, indexstart[i], indexstop[i])
 		mycandlesticks = utilities.MergeMACD(mycandlesticks, tableOfMACDs, indexstart[i], indexstop[i])
-		mycandlesticks = utilities.MergeRSI(mycandlesticks, rsi, indexstart[i], indexstop[i])
 		allcandlesticks = append(allcandlesticks, mycandlesticks)
 		pretty.Println()
 
@@ -581,7 +579,6 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 			if allcandlesticks[coin][i].MacD[0][1] >= 0 && allcandlesticks[coin][i+1].MacD[0][1] < 0 && allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] {
 				//Going over next candlesticks
 				i = i + 2
-
 				//Checking 1 PERIOD /////////////////////////////////////////////////////////////
 				indexPeriod1 := i
 				shouldStop := 0
@@ -634,7 +631,6 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 					beg1Period = iback
 				}
 				candleMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][beg1Period:indexPeriod2-1], "min", "body", 0)
-				pretty.Println(candleMinPeriod3, macMinPeriod3, candleMinPeriod3Tail, candleMinPeriod1, macMinPeriod1)
 				//Checking final conditions ///////////////////////////////////////////////////////////
 				if candleMinPeriod1 <= candleMinPeriod3 || macMinPeriod1 >= macMinPeriod3 {
 					i = coinIndexBegin
@@ -842,10 +838,12 @@ func AlgoRsiAPC(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
 		var tableOfMACDs []*model.MACD
 		tableOfMACDs = append(tableOfMACDs, macd1, macd2)
+		var tableOfRSIs []*model.RSI
+		tableOfRSIs = append(tableOfRSIs, rsi)
 		mycandlesticks = utilities.CandlesToMyCandles(candlesticks[num][1], indexstart[i], indexstop[i])
 		mycandlesticks = utilities.MergeEMA(mycandlesticks, tableOfEMAs, indexstart[i], indexstop[i])
 		mycandlesticks = utilities.MergeMACD(mycandlesticks, tableOfMACDs, indexstart[i], indexstop[i])
-		mycandlesticks = utilities.MergeRSI(mycandlesticks, rsi, indexstart[i], indexstop[i])
+		mycandlesticks = utilities.MergeRSI(mycandlesticks, tableOfRSIs, indexstart[i], indexstop[i])
 		allcandlesticks = append(allcandlesticks, mycandlesticks)
 
 	}
@@ -878,7 +876,7 @@ func AlgoRsiAPC(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 			// 		break
 			// 	}
 			// }
-			if allcandlesticks[coin][i].RSI <= float64(value) {
+			if allcandlesticks[coin][i].RSI[0] <= float64(value) {
 				//Going over next candlesticks
 				i = i + 1
 

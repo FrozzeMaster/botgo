@@ -235,3 +235,81 @@ func MinAndMax(array []int, mom string) int {
 	}
 	return 0
 }
+
+//MinAndMax gets the highest points on the chart and macd
+func MinAndMaxCandles(candlesticks []*model.MyKline, which string, mom string) float64 {
+	switch mom {
+	case "min":
+		switch which {
+		case "open":
+			min := candlesticks[0].Open
+			for i := 1; i < len(candlesticks); i++ {
+				if min > candlesticks[i].Open {
+					min = candlesticks[i].Open
+				}
+			}
+			return min
+		case "close":
+			min := candlesticks[0].Close
+			for i := 1; i < len(candlesticks); i++ {
+				if min > candlesticks[i].Close {
+					min = candlesticks[i].Close
+				}
+			}
+			return min
+		case "min":
+			min := candlesticks[0].Min
+			for i := 1; i < len(candlesticks); i++ {
+				if min > candlesticks[i].Min {
+					min = candlesticks[i].Min
+				}
+			}
+			return min
+		case "max":
+			min := candlesticks[0].Max
+			for i := 1; i < len(candlesticks); i++ {
+				if min > candlesticks[i].Max {
+					min = candlesticks[i].Max
+				}
+			}
+			return min
+		}
+
+	case "max":
+		switch which {
+		case "open":
+			max := candlesticks[0].Open
+			for i := 1; i < len(candlesticks); i++ {
+				if max < candlesticks[i].Open {
+					max = candlesticks[i].Open
+				}
+			}
+			return max
+		case "close":
+			max := candlesticks[0].Close
+			for i := 1; i < len(candlesticks); i++ {
+				if max < candlesticks[i].Close {
+					max = candlesticks[i].Close
+				}
+			}
+			return max
+		case "min":
+			max := candlesticks[0].Min
+			for i := 1; i < len(candlesticks); i++ {
+				if max < candlesticks[i].Min {
+					max = candlesticks[i].Min
+				}
+			}
+			return max
+		case "max":
+			max := candlesticks[0].Max
+			for i := 1; i < len(candlesticks); i++ {
+				if max < candlesticks[i].Max {
+					max = candlesticks[i].Max
+				}
+			}
+			return max
+		}
+	}
+	return 0
+}

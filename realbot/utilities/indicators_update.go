@@ -86,3 +86,81 @@ func UpdateEMA(candlesticks []*model.MyKline, ema *model.MovingAverage) ([]*mode
 	return candlesticks, ema
 
 }
+
+//UpdateMACD updates MACD using the last given candle
+func UpdateRSI(candlesticks []*model.MyKline, rsi *model.RSI) ([]*model.MyKline, *model.RSI) {
+
+	//Calculating new values
+	var candleVal float64
+	timestamp := candlesticks[len(candlesticks)-1].OpenTime
+	switch rsi.WhichValue {
+	case "close":
+		candleVal = candlesticks[len(candlesticks)-1].Close
+	case "open":
+		candleVal = candlesticks[len(candlesticks)-1].Open
+	}
+	var singleValue model.RSIstamp
+	singleValue.Timestamp = timestamp
+	singleValue.Close = candleVal
+	singleValue.Change = singleValue.Close - rsi.Keys[len(rsi.Keys)-1].Close
+	if singleValue.Change > 0 {
+		singleValue.CurrGain = singleValue.Change
+		singleValue.CurrLoss = 0
+	} else {
+		singleValue.CurrGain = 0
+		singleValue.CurrLoss = -singleValue.Change
+	}
+
+	avggain, avgloss := rsi.Keys[len(rsi.Keys)-1].AvgGain, rsi.Keys[len(rsi.Keys)-1].AvgLoss
+
+	singleValue.AvgGain = (avggain*float64(rsi.IntervalValue-1) + singleValue.CurrGain) / float64(rsi.IntervalValue)
+	singleValue.AvgLoss = (avgloss*float64(rsi.IntervalValue-1) + singleValue.CurrLoss) / float64(rsi.IntervalValue)
+	if singleValue.AvgLoss == 0 {
+		singleValue.RS = 100
+		singleValue.RSI = 100
+	} else {
+		singleValue.RS = singleValue.AvgGain / singleValue.AvgLoss
+		singleValue.RSI = 100 - (100 / (1 + singleValue.RS))
+	}
+	rsi.Keys = append(rsi.Keys, &singleValue)
+
+	candlesticks[len(candlesticks)-1].RSI = append(candlesticks[len(candlesticks)-1].RSI, singleValue.RSI)
+
+	//Removing first element of an arrays to clear memory
+	rsi.Keys = rsi.Keys[1:]
+
+	return candlesticks, rsi
+
+}
+
+func UpdateBollingerBands(candlesticks []*model.MyKline, bb *model.BollingerBands) ([]*model.MyKline, *model.BollingerBands) {
+	candleVal := candlesticks[len(candlesticks)-1].Close
+	candleValForSma := candlesticks[len(candlesticks)-1-int(bb.E1)].Close
+	ai := len(candlesticks) - 1
+	//Updating SMA inside BOLLINGER
+	lastSmaVal := bb.E1Keys[len(bb.E1Keys)-1].Value
+	newSmaVal := (float64(bb.E1)*lastSmaVal - candleValForSma + candleVal) / float64(bb.E1)
+	stDevParts := 0.00
+	for i := ai; i > ai-int(bb.E1); i-- {
+		stDevParts += (candlesticks[i].Close - float64(newSmaVal))
+	}
+	stDev := stDevParts / (float64(bb.E1) - 1)
+	upperBand := newSmaVal + bb.BandValue*stDev
+	lowerBand := newSmaVal - bb.BandValue*stDev
+	Bstamp := &model.SingleBollingerBandsStamp{
+		Timestamp: candlesticks[ai].OpenTime,
+		Value:     []float64{upperBand, newSmaVal, lowerBand},
+	}
+	SmaStamp := &model.SingleMovingAverageStamp{
+		Timestamp: candlesticks[ai].OpenTime,
+		Value:     newSmaVal,
+	}
+	bb.Keys = append(bb.Keys, Bstamp)
+	bb.E1Keys = append(bb.E1Keys, SmaStamp)
+	candlesticks[ai].BollingerBands = append(candlesticks[ai].BollingerBands, []float64{upperBand, newSmaVal, lowerBand})
+	//Removing first element of an arrays to clear memory
+	bb.Keys = bb.Keys[1:]
+	bb.E1Keys = bb.E1Keys[1:]
+
+	return candlesticks, bb
+}

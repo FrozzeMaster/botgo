@@ -1,15 +1,5 @@
 package model
 
-//SingleMovingAverageStamp keeps daa for single timestamp
-type SingleMovingAverageStamp struct {
-	Timestamp int64
-	Value     float64
-}
-type SingleMACDStamp struct {
-	Timestamp int64
-	Value     []float64
-}
-
 //MovingAverage keeps moving average data
 type MovingAverage struct {
 	Keys           []*SingleMovingAverageStamp
@@ -20,6 +10,14 @@ type MovingAverage struct {
 	IntervalValue  int64
 	WhichValue     string
 }
+
+//SingleMovingAverageStamp keeps daa for single timestamp
+type SingleMovingAverageStamp struct {
+	Timestamp int64
+	Value     float64
+}
+
+//RSI stores RSI model
 type RSI struct {
 	Keys           []*RSIstamp
 	Pair           string
@@ -59,18 +57,43 @@ type MACD struct {
 	WhichValue         string
 }
 
+//SingleMACDStamp
+type SingleMACDStamp struct {
+	Timestamp int64
+	Value     []float64
+}
+
+//BollingerBands to handle Bollinger Bands
+type BollingerBands struct {
+	Keys           []*SingleBollingerBandsStamp
+	E1Keys         []*SingleMovingAverageStamp
+	Pair           string
+	StartTimestamp int64
+	StopTimestamp  int64
+	Interval       string
+	E1             int64
+	BandValue      float64
+}
+
+//SingleBollingerBandsStamp
+type SingleBollingerBandsStamp struct {
+	Timestamp int64
+	Value     []float64
+}
+
 //MyKline serves for handling data within one Kline
 type MyKline struct {
-	Open      float64
-	Close     float64
-	Min       float64
-	Max       float64
-	Volume    float64
-	OpenTime  int64
-	CloseTime int64
-	Emas      []float64
-	MacD      [][]float64
-	RSI       float64
+	Open           float64
+	Close          float64
+	Min            float64
+	Max            float64
+	Volume         float64
+	OpenTime       int64
+	CloseTime      int64
+	Emas           []float64
+	MacD           [][]float64
+	RSI            []float64
+	BollingerBands [][]float64
 }
 
 //TransNumbers keep transaction numbers

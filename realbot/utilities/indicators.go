@@ -161,3 +161,149 @@ func MACD(candlesticks []*model.MyKline, whichValue string, signalValue1 int64, 
 	}
 	return &macd
 }
+
+//RSI returns moving rsi struct
+func RSI(candlesticks []*model.MyKline, whichValue string, interval string, intervalValue int64, indexstart int, indexstop int, pair string) *model.RSI {
+
+	//Declaring variables needed to return moving Average Object
+	var fullMoving model.RSI
+	fullMoving.StartTimestamp = int64(indexstart)
+	fullMoving.StopTimestamp = int64(indexstop)
+	fullMoving.Pair = pair
+	fullMoving.Interval = interval
+	//Liczenie pierwszych wartości
+	for i := indexstart; i < indexstart+int(intervalValue); i++ {
+		if i == indexstart {
+			var singleValue model.RSIstamp
+			singleValue.Timestamp = candlesticks[i].OpenTime
+			singleValue.Change = 0
+			singleValue.AvgGain = 0
+			singleValue.AvgLoss = 0
+			singleValue.CurrGain = 0
+			singleValue.CurrLoss = 0
+			singleValue.RS = 0
+			singleValue.RSI = 0
+			singleValue.Close = candlesticks[i].Close
+			fullMoving.Keys = append(fullMoving.Keys, &singleValue)
+		} else {
+			var singleValue model.RSIstamp
+			singleValue.Timestamp = candlesticks[i].OpenTime
+			singleValue.Close = candlesticks[i].Close
+			singleValue.Change = fullMoving.Keys[len(fullMoving.Keys)-1].Close - singleValue.Close
+			if singleValue.Change > 0 {
+				singleValue.CurrGain = singleValue.Change
+				singleValue.CurrLoss = 0
+			} else {
+				singleValue.CurrGain = 0
+				singleValue.CurrLoss = -singleValue.Change
+			}
+			singleValue.AvgGain = 0
+			singleValue.AvgLoss = 0
+			singleValue.RS = 0
+			singleValue.RSI = 0
+			fullMoving.Keys = append(fullMoving.Keys, &singleValue)
+		}
+	}
+	//Calculating SMA for index
+	for i := indexstart + int(intervalValue); i < indexstop; i++ {
+		if i == indexstart+int(intervalValue) {
+			var singleValue model.RSIstamp
+			singleValue.Timestamp = candlesticks[i].OpenTime
+			singleValue.Close = candlesticks[i].Close
+			singleValue.Change = singleValue.Close - fullMoving.Keys[len(fullMoving.Keys)-1].Close
+			if singleValue.Change > 0 {
+				singleValue.CurrGain = singleValue.Change
+				singleValue.CurrLoss = 0
+			} else {
+				singleValue.CurrGain = 0
+				singleValue.CurrLoss = -singleValue.Change
+			}
+
+			avggain, avgloss := 0.00, 0.00
+			avggain = avggain + singleValue.CurrGain
+			avgloss = avgloss + singleValue.CurrLoss
+			for o := len(fullMoving.Keys) - 1; o > len(fullMoving.Keys)-(int(intervalValue)); o-- {
+				avggain += fullMoving.Keys[o].CurrGain
+				avgloss += fullMoving.Keys[o].CurrLoss
+			}
+			singleValue.AvgGain = avggain / float64(intervalValue)
+			singleValue.AvgLoss = avgloss / float64(intervalValue)
+			if singleValue.AvgLoss == 0 {
+				singleValue.RS = 100
+				singleValue.RSI = 100
+			} else {
+				singleValue.RS = singleValue.AvgGain / singleValue.AvgLoss
+				singleValue.RSI = 100 - (100 / (1 + singleValue.RS))
+			}
+			fullMoving.Keys = append(fullMoving.Keys, &singleValue)
+		} else {
+			var singleValue model.RSIstamp
+			singleValue.Timestamp = candlesticks[i].OpenTime
+			singleValue.Close = candlesticks[i].Close
+			singleValue.Change = singleValue.Close - fullMoving.Keys[len(fullMoving.Keys)-1].Close
+			if singleValue.Change > 0 {
+				singleValue.CurrGain = singleValue.Change
+				singleValue.CurrLoss = 0
+			} else {
+				singleValue.CurrGain = 0
+				singleValue.CurrLoss = -singleValue.Change
+			}
+
+			avggain, avgloss := fullMoving.Keys[len(fullMoving.Keys)-1].AvgGain, fullMoving.Keys[len(fullMoving.Keys)-1].AvgLoss
+
+			singleValue.AvgGain = (avggain*float64(intervalValue-1) + singleValue.CurrGain) / float64(intervalValue)
+			singleValue.AvgLoss = (avgloss*float64(intervalValue-1) + singleValue.CurrLoss) / float64(intervalValue)
+			if singleValue.AvgLoss == 0 {
+				singleValue.RS = 100
+				singleValue.RSI = 100
+			} else {
+				singleValue.RS = singleValue.AvgGain / singleValue.AvgLoss
+				singleValue.RSI = 100 - (100 / (1 + singleValue.RS))
+			}
+			fullMoving.Keys = append(fullMoving.Keys, &singleValue)
+		}
+	}
+
+	return &fullMoving
+}
+
+//BollingerBands retursn Exponential moving average - OK80%
+func BollingerBands(candlesticks []*model.MyKline, smaValue int64, interval string, bandValue float64, indexstart int, indexstop int, pair string) *model.BollingerBands {
+
+	//Getting sma data and declaring containers
+	smatable := SMA(candlesticks, "close", interval, smaValue, indexstart, indexstop, pair)
+	smaiterator := 0
+	var BollingerBands model.BollingerBands
+	var BollingerBandsStamps []*model.SingleBollingerBandsStamp
+
+	//Calculating Bollinger for index
+	for i := indexstart + int(smaValue); i < indexstop; i++ {
+
+		candleVal := candlesticks[i].Close
+		actualsma := smatable.Keys[smaiterator].Value
+		stDevParts := 0.00
+		//Going backwards to get average
+		for o := i - int(smaValue); o < i; o++ {
+			stDevParts += (candlesticks[o].Close - actualsma)
+		}
+		stDev := (stDevParts + (candleVal - actualsma)) / float64((float64(smaValue) - 1))
+		upperBand := actualsma + bandValue*stDev
+		lowerBand := actualsma - bandValue*stDev
+		Bstamp := &model.SingleBollingerBandsStamp{
+			Timestamp: candlesticks[i].OpenTime,
+			Value:     []float64{upperBand, actualsma, lowerBand},
+		}
+		BollingerBandsStamps = append(BollingerBandsStamps, Bstamp)
+
+	}
+	//Model data
+	BollingerBands.Keys = BollingerBandsStamps
+	BollingerBands.E1Keys = smatable.Keys
+	BollingerBands.Pair = pair
+	BollingerBands.StartTimestamp = int64(indexstart)
+	BollingerBands.StopTimestamp = int64(indexstop)
+	BollingerBands.Interval = interval
+	BollingerBands.BandValue = bandValue
+	BollingerBands.E1 = smaValue
+	return &BollingerBands
+}

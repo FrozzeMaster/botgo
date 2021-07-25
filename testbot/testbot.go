@@ -12,7 +12,6 @@ import (
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
-	"github.com/kr/pretty"
 )
 
 //TestBot is main struct that runs bot for single pair
@@ -176,31 +175,33 @@ func (bot *TestBot) GetCandlesFromRange(pair string, start string, stop string) 
 //Chart of worthness
 func (bot *TestBot) GenerateChartsFromAlgorithm(pair string, from string, to string) {
 	fmt.Println("Chart genreation started")
-	var low []float64
-	var high []float64
+	var tp []float64
+	var pro []float64
 	var value []int
 	pair1 := []string{"BTCUSDT", "ETHUSDT", "ADAUSDT", "NEOUSDT", "XLMUSDT", "XRPUSDT"}
-	for i := 990; i >= 990; i = i - 1 {
-		high = append(high, float64(float64(i)/1000.00))
+	for i := 1005; i <= 1050; i = i + 5 {
+		pro = append(pro, float64(float64(i)/1000.00))
 	}
-	for i := 1090; i <= 1090; i = i + 1 {
-		low = append(low, float64(float64(i)/1000.00))
+	for i := 15; i <= 100; i = i + 10 {
+		tp = append(tp, float64(float64(i)/100.00))
 	}
-	pretty.Println(high, low)
-	for i := 19; i >= 19; i-- {
+	for i := 10; i <= 30; i = i + 3 {
 		value = append(value, i)
 	}
 	for s := 0; s < len(value); s++ {
 		data := make([][3]interface{}, 0)
 		min := 10000000000.00
 		max := 0.00
-		for i := 0; i < len(low); i++ {
-			for o := 0; o < len(high); o++ {
+		for i := 0; i < len(pro); i++ {
+			for o := 0; o < len(tp); o++ {
 				var fin float64 = 0
-				fullTrans := AlgoRsiAPC(float64(bot.WalletFuturesUSDT), float64(bot.FeeMaker), float64(bot.FeeTaker), bot.KlinesDataCsv, pair1, from, to, low[i], high[o], value[s])
+				//----------------------------------------//
+				///INSERTING GIVEN ALGORITHM TO BE CHECKED//
+				//----------------------------------------//
+				fullTrans := AlgoRsiAPC(float64(bot.WalletFuturesUSDT), float64(bot.FeeMaker), float64(bot.FeeTaker), bot.KlinesDataCsv, pair1, from, to, tp[o], pro[i], value[s])
 				fin += fullTrans.Finalusdt
-				fmt.Println(fullTrans.Transamount, fullTrans.SuccessfulTrans)
-				data = append(data, [3]interface{}{low[i], high[o], fin})
+				fmt.Println(value[s], pro[i], tp[o], fullTrans.Transamount, fullTrans.SuccessfulTrans)
+				data = append(data, [3]interface{}{pro[i], tp[o], fin})
 				if fin < min {
 					min = fin
 				}
@@ -212,8 +213,8 @@ func (bot *TestBot) GenerateChartsFromAlgorithm(pair string, from string, to str
 		surface3d := charts.NewSurface3D()
 		surface3d.SetGlobalOptions(
 			charts.WithZAxis3DOpts(opts.ZAxis3D{Min: min, Max: max}),
-			charts.WithXAxis3DOpts(opts.XAxis3D{Min: low[0], Max: low[len(low)-1]}),
-			charts.WithYAxis3DOpts(opts.YAxis3D{Min: high[len(low)-1], Max: high[0]}),
+			charts.WithXAxis3DOpts(opts.XAxis3D{Min: pro[0], Max: pro[len(pro)-1]}),
+			charts.WithYAxis3DOpts(opts.YAxis3D{Min: tp[len(tp)-1], Max: tp[0]}),
 			charts.WithTitleOpts(opts.Title{Title: "basic surface3D example"}),
 			charts.WithVisualMapOpts(opts.VisualMap{
 				Calculable: true,

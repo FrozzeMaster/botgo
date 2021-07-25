@@ -139,3 +139,137 @@ func MergeEMA(candlesticks []*model.MyKline, emas []*model.MovingAverage, indexs
 	}
 	return candlesticks
 }
+
+//MergeRSI mergres RSI with MyKline candles
+func MergeRSI(candlesticks []*model.MyKline, rsi []*model.RSI, indexstart int, indexstop int) []*model.MyKline {
+	for x := 0; x < len(rsi); x++ {
+		it1m := 0
+		it5m := 0
+		it15m := 0
+		it1h := 0
+		it1d := 0
+
+		for i := 0; i < len(candlesticks); i++ {
+			//Reading default candlesticks data
+			opentime := candlesticks[i].OpenTime
+			switch rsi[x].Interval {
+			case "1m":
+				candlesticks[i].RSI[x] = rsi[x].Keys[it1m].RSI
+				it1m++
+			case "5m":
+				if opentime >= rsi[x].Keys[it5m].Timestamp {
+					if it5m+1 < len(rsi[x].Keys) {
+						if opentime >= rsi[x].Keys[it5m+1].Timestamp {
+							it5m++
+						}
+						candlesticks[i].RSI[x] = rsi[x].Keys[it5m].RSI
+					} else {
+						candlesticks[i].RSI[x] = rsi[x].Keys[it5m].RSI
+					}
+				}
+			case "15m":
+				if opentime >= rsi[x].Keys[it15m].Timestamp {
+					if it15m+1 < len(rsi[x].Keys) {
+						if opentime >= rsi[x].Keys[it15m+1].Timestamp {
+							it15m++
+						}
+						candlesticks[i].RSI[x] = rsi[x].Keys[it15m].RSI
+					} else {
+						candlesticks[i].RSI[x] = rsi[x].Keys[it15m].RSI
+					}
+				}
+			case "1h":
+				if opentime >= rsi[x].Keys[it1h].Timestamp {
+					if it1h+1 < len(rsi[x].Keys) {
+						if opentime >= rsi[x].Keys[it1h+1].Timestamp {
+							it1h++
+						}
+						candlesticks[i].RSI[x] = rsi[x].Keys[it1h].RSI
+					} else {
+						candlesticks[i].RSI[x] = rsi[x].Keys[it1h].RSI
+					}
+				}
+			case "1d":
+				if opentime >= rsi[x].Keys[it1d].Timestamp {
+					if it1d+1 < len(rsi[x].Keys) {
+						if opentime >= rsi[x].Keys[it1d+1].Timestamp {
+							it1d++
+						}
+						candlesticks[i].RSI[x] = rsi[x].Keys[it1d].RSI
+					} else {
+						candlesticks[i].RSI[x] = rsi[x].Keys[it1d].RSI
+					}
+				}
+
+			}
+		}
+	}
+	return candlesticks
+}
+
+//MergeRSI mergres RSI with MyKline candles
+func MergeBollingerBands(candlesticks []*model.MyKline, bb []*model.BollingerBands, indexstart int, indexstop int) []*model.MyKline {
+	for x := 0; x < len(bb); x++ {
+		it1m := 0
+		it5m := 0
+		it15m := 0
+		it1h := 0
+		it1d := 0
+
+		for i := 0; i < len(candlesticks); i++ {
+			//Reading default candlesticks data
+			opentime := candlesticks[i].OpenTime
+			switch bb[x].Interval {
+			case "1m":
+				candlesticks[i].BollingerBands[x] = bb[x].Keys[it1m].Value
+				it1m++
+			case "5m":
+				if opentime >= bb[x].Keys[it5m].Timestamp {
+					if it5m+1 < len(bb[x].Keys) {
+						if opentime >= bb[x].Keys[it5m+1].Timestamp {
+							it5m++
+						}
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it5m].Value
+					} else {
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it5m].Value
+					}
+				}
+			case "15m":
+				if opentime >= bb[x].Keys[it15m].Timestamp {
+					if it15m+1 < len(bb[x].Keys) {
+						if opentime >= bb[x].Keys[it15m+1].Timestamp {
+							it15m++
+						}
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it15m].Value
+					} else {
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it15m].Value
+					}
+				}
+			case "1h":
+				if opentime >= bb[x].Keys[it1h].Timestamp {
+					if it1h+1 < len(bb[x].Keys) {
+						if opentime >= bb[x].Keys[it1h+1].Timestamp {
+							it1h++
+						}
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it1h].Value
+					} else {
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it1h].Value
+					}
+				}
+			case "1d":
+				if opentime >= bb[x].Keys[it1d].Timestamp {
+					if it1d+1 < len(bb[x].Keys) {
+						if opentime >= bb[x].Keys[it1d+1].Timestamp {
+							it1d++
+						}
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it1d].Value
+					} else {
+						candlesticks[i].BollingerBands[x] = bb[x].Keys[it1d].Value
+					}
+				}
+
+			}
+		}
+	}
+	return candlesticks
+}

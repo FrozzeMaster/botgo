@@ -2,6 +2,7 @@ package realbot
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/CraZzier/bot/model"
 	rmf "github.com/CraZzier/bot/realbot/utilities"
@@ -35,6 +36,7 @@ type RealBot struct {
 
 //Initialization is ment to be getting data of user while strating the bot
 func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLimit int) {
+	fmt.Println("Realbot initialised")
 	bot.Pairs = pairs
 	bot.Intervals = intervals
 	bot.CandleLimit = candleLimit
@@ -73,12 +75,16 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 		ema2 := rmf.EMA(bot.CustomKline[num][0], "close", "5m", 600, 0, 999, pairs[num])
 		macd1 := rmf.MACD(bot.CustomKline[num][0], "close", 7, 7, 12, "5m", 0, 999, pairs[num])
 		macd2 := rmf.MACD(bot.CustomKline[num][0], "close", 18, 13, 25, "5m", 0, 999, pairs[num])
+		bb := rmf.BollingerBands(bot.CustomKline[num][0], 20, "5m", 5.5, 0, 999, pairs[num])
 		var tableOfEMAs []*model.MovingAverage
-		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
 		var tableOfMACDs []*model.MACD
+		var tableOfBollingerBands []*model.BollingerBands
+		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
 		tableOfMACDs = append(tableOfMACDs, macd1, macd2)
+		tableOfBollingerBands = append(tableOfBollingerBands, bb)
 		bot.CustomKline[num][0] = rmf.MergeEMA(bot.CustomKline[num][0], tableOfEMAs, 0, 999)
 		bot.CustomKline[num][0] = rmf.MergeMACD(bot.CustomKline[num][0], tableOfMACDs, 0, 999)
+		bot.CustomKline[num][0] = rmf.MergeBollingerBands(bot.CustomKline[num][0], tableOfBollingerBands, 0, 999)
 		ema1T = append(ema1T, ema1)
 		ema2T = append(ema2T, ema2)
 		macd1T = append(macd1T, macd1)
@@ -115,11 +121,13 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 				rmf.UpdateEMA(bot.CustomKline[o][0], ema1T[o])
 				rmf.UpdateEMA(bot.CustomKline[o][0], ema2T[o])
 			}
+			//Checking account status
 			bot.GetAccountInfo()
 			bot.GetBalanceInfo()
 			bot.NumberOfActivePositions()
+			//Testing formation
 			if bot.ActivePositions == 0 {
-				bot.TestFormation()
+				bot.TestMACD()
 			}
 		}
 		if sum15m == len(pairs) {

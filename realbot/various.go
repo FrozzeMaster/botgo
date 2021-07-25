@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/kr/pretty"
@@ -114,4 +115,11 @@ func (bot *RealBot) ShowSavedKlines() {
 //ShowlastSingleKlines shows klines
 func (bot *RealBot) ShowSavedSingleKlines(pairNum int, intervalNum int) {
 	fmt.Println(bot.CustomKline[pairNum][intervalNum][len(bot.CustomKline[pairNum][intervalNum])-1])
+}
+
+//DisplaTime displays current time
+
+func (bot *RealBot) DisplayTime() string {
+	now := time.Now()
+	return now.Format("15:04:05 01-02-2006")
 }

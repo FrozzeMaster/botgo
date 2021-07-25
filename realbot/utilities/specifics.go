@@ -121,21 +121,19 @@ func CheckCrossing(candlesticks []*model.MyKline, toSide string, macdNum int) (b
 	found := 0
 	index := -1
 	for i := 1; i < len(candlesticks); i++ {
-		if candlesticks[i].MacD[macdNum][1] > 0 && candlesticks[i-1].MacD[macdNum][1] <= 0 && toSide == "Down" {
+		if candlesticks[i].MacD[macdNum][1] > 0 && candlesticks[i-1].MacD[macdNum][1] <= 0 && toSide == "Up" {
 			found++
 			index = i
 		}
-		if candlesticks[i].MacD[macdNum][1] <= 0 && candlesticks[i-1].MacD[macdNum][1] > 0 && toSide == "Up" {
+		if candlesticks[i].MacD[macdNum][1] <= 0 && candlesticks[i-1].MacD[macdNum][1] > 0 && toSide == "Down" {
 			found++
 			index = i
 		}
 	}
 	if found == 0 {
 		return false, -1
-	} else if found == 1 {
-		return true, index
 	} else {
-		return false, -1
+		return true, index
 	}
 }
 

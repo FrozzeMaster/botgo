@@ -1,17 +1,18 @@
 package realbot
 
 import (
-	"fmt"
 	"math"
 
 	rmf "github.com/CraZzier/bot/realbot/utilities"
 	"github.com/kr/pretty"
 )
 
-func (bot *RealBot) TestFormation() {
+func (bot *RealBot) TestMACD() {
 	//Declaring important variables
 	var it int
-	fmt.Println("Test formacji")
+	notifier := NewNotifier()
+	notifier.AddMsg(bot.DisplayTime(), " Test formacji MACD")
+
 	leverage := 1.00
 	profit, stop := 1.01, 0.9975
 
@@ -31,9 +32,8 @@ func (bot *RealBot) TestFormation() {
 			candles[i].MacD[0][0] < 0 &&
 			candles[i].Emas[0] > candles[i].Emas[1] {
 			//Going over next candlesticks
-			fmt.Println(bot.Pairs[coin])
 			i = i - 1
-			fmt.Println("1.Pierwszy zielony po czerwonym znaleziony")
+			notifier.AddMsg(bot.DisplayTime(), "Potencjalny long: ", bot.Pairs[coin])
 			//Checking 3 PERIOD //////////////////////////////////////////////////////////////
 			indexPeriod3 := i
 			shouldStop := 0
@@ -47,7 +47,7 @@ func (bot *RealBot) TestFormation() {
 			if indexPeriod3-i < 3 || indexPeriod3-i > 150 || shouldStop == 1 {
 				continue
 			}
-			fmt.Println("2. Trzeci period - ok")
+			notifier.AddMsg("Trzeci okres: ", indexPeriod3-i, " czerwonych candlesticków")
 			//Checking 2 PERIOD //////////////////////////////////////////////////////////////
 			indexPeriod2 := i
 			shouldStop = 0
@@ -56,12 +56,12 @@ func (bot *RealBot) TestFormation() {
 					shouldStop = 1
 					break
 				}
-				i++
+				i--
 			}
 			if indexPeriod2-i < 3 || indexPeriod2-i > 40 || shouldStop == 1 {
 				continue
 			}
-			fmt.Println("3. Drugi period - ok")
+			notifier.AddMsg("Drugi okres: ", indexPeriod2-i, " zielonych candlesticków")
 			//Checking 1 PERIOD /////////////////////////////////////////////////////////////
 			indexPeriod1 := i
 			shouldStop = 0
@@ -72,23 +72,29 @@ func (bot *RealBot) TestFormation() {
 				}
 				i--
 			}
-			found, _ := rmf.CheckCrossing(candles[indexPeriod1:indexPeriod2-1], "Down", 0)
-			fmt.Println("4. Pierwszy period przecięcie - ok")
-			if indexPeriod1-i < 3 || indexPeriod1-i > 150 || !found || shouldStop == 1 {
+			if indexPeriod1-i < 3 || indexPeriod1-i > 150 || shouldStop == 1 {
 				continue
 			}
-			fmt.Println("5. Pierwszy period  - ok")
-			candleMinPeriod3 := rmf.Period1ValuesBody(candles[i:indexPeriod3], "min", "body", 0)
-			macMinPeriod3 := rmf.Period1ValuesBody(candles[i:indexPeriod3], "min", "macd", 0)
-			candleMinPeriod3Tail := rmf.Period1ValuesBody(candles[i:indexPeriod3], "min", "tail", 0)
-			candleMinPeriod1 := rmf.Period1ValuesBody(candles[indexPeriod1:indexPeriod2-1], "min", "body", 0)
-			macMinPeriod1 := rmf.Period1ValuesBody(candles[indexPeriod1:indexPeriod2-1], "min", "macd", 0)
+			notifier.AddMsg("Pierwszy okres: ", indexPeriod1-i, " czerwonych candlesticków")
+			found, position := rmf.CheckCrossing(candles[i:indexPeriod1], "Down", 0)
+			if !found {
+				notifier.AddMsg("Pierwszy okres: nie znaleziono przecięcia")
+				continue
+			} else {
+				notifier.AddMsg("Pierwszy okres: znaleziono przecięcie: ", position)
+			}
+			candleMinPeriod3 := rmf.Period1ValuesBody(candles[indexPeriod2:indexPeriod3], "min", "body", 0)
+			macMinPeriod3 := rmf.Period1ValuesBody(candles[indexPeriod2:indexPeriod3], "min", "macd", 0)
+			candleMinPeriod3Tail := rmf.Period1ValuesBody(candles[indexPeriod2:indexPeriod3], "min", "tail", 0)
+			candleMinPeriod1 := rmf.Period1ValuesBody(candles[i:indexPeriod1], "min", "body", 0)
+			macMinPeriod1 := rmf.Period1ValuesBody(candles[i:indexPeriod1], "min", "macd", 0)
 			pretty.Println(candleMinPeriod3, macMinPeriod3, candleMinPeriod3Tail, candleMinPeriod1, macMinPeriod1)
 			//Checking final conditions ///////////////////////////////////////////////////////////
 			if candleMinPeriod1 <= candleMinPeriod3 || macMinPeriod1 >= macMinPeriod3 {
+				notifier.AddMsg("Rozbieżności MACD i wykresu nie zgadzają się")
 				continue
 			}
-			fmt.Println("6. Candle i macd  - ok")
+			notifier.AddMsg("Rozbieżności MACD i wykresu zgadzają się")
 			//Starting transaction
 			stop = candleMinPeriod3Tail / candles[coinIndexBegin].Close
 			profit = 1 + 3*(1-stop)
@@ -99,10 +105,10 @@ func (bot *RealBot) TestFormation() {
 			}
 			leverage = math.Round(leverage)
 			if stop >= 0.995 {
-				fmt.Println("Za niski target")
+				notifier.AddMsg("Za niski target")
 				continue
 			}
-			fmt.Println("7. Stoploss  - ok")
+			notifier.AddMsg("Stoploss jest w porzadku")
 			actualPrice := bot.GetTickerPrice(bot.Pairs[coin])
 			profit = actualPrice * profit
 			stop = actualPrice * stop
@@ -116,9 +122,8 @@ func (bot *RealBot) TestFormation() {
 			candles[i].MacD[1][0] > 0 &&
 			candles[i].Emas[0] < candles[i].Emas[1] {
 			//Going over next candlesticks
-			fmt.Println(bot.Pairs[coin])
 			i = i - 1
-			fmt.Println("1.Pierwszy czerwony po zielonym znaleziony")
+			notifier.AddMsg(bot.DisplayTime(), "Potencjalny short: ", bot.Pairs[coin])
 			//Checking 3 PERIOD //////////////////////////////////////////////////////////////
 			indexPeriod3 := i
 			shouldStop := 0
@@ -132,7 +137,7 @@ func (bot *RealBot) TestFormation() {
 			if indexPeriod3-i < 3 || indexPeriod3-i > 150 || shouldStop == 1 {
 				continue
 			}
-			fmt.Println("2. Trzeci period - ok")
+			notifier.AddMsg("Trzeci okres: ", indexPeriod3-i, " zielonych candlesticków")
 			//Checking 2 PERIOD //////////////////////////////////////////////////////////////
 			indexPeriod2 := i
 			shouldStop = 0
@@ -141,12 +146,12 @@ func (bot *RealBot) TestFormation() {
 					shouldStop = 1
 					break
 				}
-				i++
+				i--
 			}
 			if indexPeriod2-i < 3 || indexPeriod2-i > 40 || shouldStop == 1 {
 				continue
 			}
-			fmt.Println("3. Drugi period - ok")
+			notifier.AddMsg("Drugi okres: ", indexPeriod2-i, " czerwonych candlesticków")
 			//Checking 1 PERIOD /////////////////////////////////////////////////////////////
 			indexPeriod1 := i
 			shouldStop = 0
@@ -157,23 +162,30 @@ func (bot *RealBot) TestFormation() {
 				}
 				i--
 			}
-			found, _ := rmf.CheckCrossing(candles[indexPeriod1:indexPeriod2-1], "Up", 1)
-			fmt.Println("4. Pierwszy period przecięcie - ok")
-			if indexPeriod1-i < 3 || indexPeriod1-i > 150 || !found || shouldStop == 1 {
+			if indexPeriod1-i < 3 || indexPeriod1-i > 150 || shouldStop == 1 {
 				continue
 			}
-			fmt.Println("5. Pierwszy period  - ok")
-			candleMinPeriod3 := rmf.Period1ValuesBody(candles[i:indexPeriod3], "max", "body", 1)
-			macMinPeriod3 := rmf.Period1ValuesBody(candles[i:indexPeriod3], "max", "macd", 1)
-			candleMinPeriod3Tail := rmf.Period1ValuesBody(candles[i:indexPeriod3], "max", "tail", 1)
-			candleMinPeriod1 := rmf.Period1ValuesBody(candles[indexPeriod1:indexPeriod2-1], "max", "body", 1)
-			macMinPeriod1 := rmf.Period1ValuesBody(candles[indexPeriod1:indexPeriod2-1], "max", "macd", 1)
+			notifier.AddMsg("Pierwszy okres: ", indexPeriod1-i, " zielonych candlesticków")
+			found, position := rmf.CheckCrossing(candles[i:indexPeriod1], "Up", 0)
+			if !found {
+				notifier.AddMsg("Pierwszy okres: nie znaleziono przecięcia")
+				continue
+			} else {
+				notifier.AddMsg("Pierwszy okres: znaleziono przecięcie: ", position)
+			}
+			candleMinPeriod3 := rmf.Period1ValuesBody(candles[indexPeriod2:indexPeriod3], "max", "body", 0)
+			macMinPeriod3 := rmf.Period1ValuesBody(candles[indexPeriod2:indexPeriod3], "max", "macd", 0)
+			candleMinPeriod3Tail := rmf.Period1ValuesBody(candles[indexPeriod2:indexPeriod3], "max", "tail", 0)
+			candleMinPeriod1 := rmf.Period1ValuesBody(candles[i:indexPeriod1], "max", "body", 0)
+			macMinPeriod1 := rmf.Period1ValuesBody(candles[i:indexPeriod1], "max", "macd", 0)
 			pretty.Println(candleMinPeriod3, macMinPeriod3, candleMinPeriod3Tail, candleMinPeriod1, macMinPeriod1)
 			//Checking final conditions ///////////////////////////////////////////////////////////
 			if candleMinPeriod1 >= candleMinPeriod3 || macMinPeriod1 <= macMinPeriod3 {
+
+				notifier.AddMsg("Rozbieżności MACD i wykresu nie zgadzają się")
 				continue
 			}
-			fmt.Println("6. Candle i macd  - ok")
+			notifier.AddMsg("Rozbieżności MACD i wykresu zgadzają się")
 			//Starting transaction
 			stop = candleMinPeriod3Tail / candles[coinIndexBegin].Close
 			profit = 1 + 3*(1-stop)
@@ -184,15 +196,19 @@ func (bot *RealBot) TestFormation() {
 			}
 			leverage = math.Round(leverage)
 			if stop >= 0.995 {
-				fmt.Println("Za niski target")
+				notifier.AddMsg("Za niski target")
 				continue
 			}
-			fmt.Println("7. Stoploss  - ok")
+			notifier.AddMsg("Stoploss w porządku")
 			actualPrice := bot.GetTickerPrice(bot.Pairs[coin])
 			profit = actualPrice * profit
 			stop = actualPrice * stop
 			bot.MakeCompleteOrder(int(leverage), bot.Pairs[coin], profit, stop, "SELL")
 
 		}
+	}
+	notifier.PrintAllOut()
+	if notifier.MsgNumber > 1 {
+		notifier.SendEmail()
 	}
 }

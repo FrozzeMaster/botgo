@@ -340,3 +340,68 @@ func MACD(candlesticks []*futures.Kline, whichValue string, signalValue1 int64, 
 	}
 	return &macd
 }
+
+//BollingerBands
+func BollingerBands(candlesticks []*futures.Kline, smaValue int64, interval string, bandValue float64, startTimestamp int64, stopTimestamp int64, pair string) *model.BollingerBands {
+	firstAvailableTimestamp := candlesticks[0].OpenTime
+	var miliInterval int64
+	//Checking range if it doestn exceed the candlesticks
+	switch interval {
+	case "1m":
+		miliInterval = 60000 * smaValue
+	case "5m":
+		miliInterval = 60000 * 5 * smaValue
+	case "15m":
+		miliInterval = 60000 * 15 * smaValue
+	case "1h":
+		miliInterval = 60000 * 60 * smaValue
+	case "1d":
+		miliInterval = 60000 * 60 * 24 * smaValue
+	case "1w":
+		miliInterval = 60000 * 60 * 24 * 7 * smaValue
+	default:
+		miliInterval = 60000 * smaValue
+	}
+	if firstAvailableTimestamp >= (startTimestamp - miliInterval) {
+		log.Fatal("Not in range")
+	}
+	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
+	//Getting sma data and declaring containers
+	smatable := MovingAverage(candlesticks, "close", interval, smaValue, int64(indexstart), int64(indexstop), pair)
+	smaiterator := 0
+	var BollingerBands model.BollingerBands
+	var BollingerBandsStamps []*model.SingleBollingerBandsStamp
+
+	//Calculating Bollinger for index
+	for i := indexstart + int(smaValue); i < indexstop; i++ {
+		cv, _ := strconv.ParseFloat(candlesticks[i].Close, 32)
+		candleVal := cv
+		actualsma := smatable.Keys[smaiterator].Value
+		stDevParts := 0.00
+		//Going backwards to get average
+		for o := i - int(smaValue); o < i; o++ {
+			close, _ := strconv.ParseFloat(candlesticks[o].Close, 32)
+			stDevParts += (close - actualsma)
+		}
+		stDev := (stDevParts + (candleVal - actualsma)) / float64((float64(smaValue) - 1))
+		upperBand := actualsma + bandValue*stDev
+		lowerBand := actualsma - bandValue*stDev
+		Bstamp := &model.SingleBollingerBandsStamp{
+			Timestamp: candlesticks[i].OpenTime,
+			Value:     []float64{upperBand, actualsma, lowerBand},
+		}
+		Bstamp.Timestamp = candlesticks[i].OpenTime
+		BollingerBandsStamps = append(BollingerBandsStamps, Bstamp)
+
+	}
+	//Model data
+	BollingerBands.Keys = BollingerBandsStamps
+	BollingerBands.E1Keys = smatable.Keys
+	BollingerBands.Pair = pair
+	BollingerBands.StartTimestamp = int64(indexstart)
+	BollingerBands.StopTimestamp = int64(indexstop)
+	BollingerBands.Interval = interval
+	BollingerBands.BandValue = bandValue
+	BollingerBands.E1 = smaValue
+	return &BollingerBands
+}
