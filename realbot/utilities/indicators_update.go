@@ -2,6 +2,7 @@ package utilities
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/CraZzier/bot/model"
 )
@@ -133,6 +134,7 @@ func UpdateRSI(candlesticks []*model.MyKline, rsi *model.RSI) ([]*model.MyKline,
 
 }
 
+//UpdateBollingerBands
 func UpdateBollingerBands(candlesticks []*model.MyKline, bb *model.BollingerBands) ([]*model.MyKline, *model.BollingerBands) {
 	candleVal := candlesticks[len(candlesticks)-1].Close
 	candleValForSma := candlesticks[len(candlesticks)-1-int(bb.E1)].Close
@@ -141,10 +143,11 @@ func UpdateBollingerBands(candlesticks []*model.MyKline, bb *model.BollingerBand
 	lastSmaVal := bb.E1Keys[len(bb.E1Keys)-1].Value
 	newSmaVal := (float64(bb.E1)*lastSmaVal - candleValForSma + candleVal) / float64(bb.E1)
 	stDevParts := 0.00
-	for i := ai; i > ai-int(bb.E1); i-- {
-		stDevParts += (candlesticks[i].Close - float64(newSmaVal))
+	for i := ai; i >= ai-int(bb.E1)+1; i-- {
+		stDevParts += math.Pow((candlesticks[i].Close - float64(newSmaVal)), 2)
 	}
-	stDev := stDevParts / (float64(bb.E1) - 1)
+	stDev := stDevParts / (float64(bb.E1))
+	stDev = math.Sqrt(stDev)
 	upperBand := newSmaVal + bb.BandValue*stDev
 	lowerBand := newSmaVal - bb.BandValue*stDev
 	Bstamp := &model.SingleBollingerBandsStamp{
@@ -163,4 +166,24 @@ func UpdateBollingerBands(candlesticks []*model.MyKline, bb *model.BollingerBand
 	bb.E1Keys = bb.E1Keys[1:]
 
 	return candlesticks, bb
+}
+
+//UpdateATR
+func UpdateATR(candlesticks []*model.MyKline, atr *model.ATR) ([]*model.MyKline, *model.ATR) {
+	ai := len(candlesticks) - 1
+	stDevParts := 0.00
+	for i := ai; i >= ai-int(atr.ATRValue)+1; i-- {
+		stDevParts += (candlesticks[i].Max - candlesticks[i].Min)
+	}
+	atrVal := stDevParts / (float64(atr.ATRValue))
+	ATRstamp := &model.SingleATRStamp{
+		Timestamp: candlesticks[ai].OpenTime,
+		Value:     atrVal,
+	}
+	atr.Keys = append(atr.Keys, ATRstamp)
+	candlesticks[ai].ATR = append(candlesticks[ai].ATR, atrVal)
+	//Removing first element of an arrays to clear memory
+	atr.Keys = atr.Keys[1:]
+
+	return candlesticks, atr
 }

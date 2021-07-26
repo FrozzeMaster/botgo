@@ -216,8 +216,12 @@ func MergeEMA(candlesticks []*model.MyKline, emas []*model.MovingAverage, indexs
 	return candlesticks
 }
 
-//MergeRSI mergres RSI with MyKline candles
+//MergeBollingerBands merges with my candles
 func MergeBollingerBands(candlesticks []*model.MyKline, bb []*model.BollingerBands, indexstart int, indexstop int) []*model.MyKline {
+	//Variable containers
+	for i := 0; i < len(candlesticks); i++ {
+		candlesticks[i].BollingerBands = make([][]float64, len(bb))
+	}
 	for x := 0; x < len(bb); x++ {
 		it1m := 0
 		it5m := 0
@@ -274,6 +278,76 @@ func MergeBollingerBands(candlesticks []*model.MyKline, bb []*model.BollingerBan
 						candlesticks[i].BollingerBands[x] = bb[x].Keys[it1d].Value
 					} else {
 						candlesticks[i].BollingerBands[x] = bb[x].Keys[it1d].Value
+					}
+				}
+
+			}
+		}
+	}
+	return candlesticks
+}
+
+//MergeATR mergres RSI with MyKline candles
+func MergeATR(candlesticks []*model.MyKline, atr []*model.ATR, indexstart int, indexstop int) []*model.MyKline {
+	for i := 0; i < len(candlesticks); i++ {
+		candlesticks[i].ATR = make([]float64, len(atr))
+	}
+	for x := 0; x < len(atr); x++ {
+		it1m := 0
+		it5m := 0
+		it15m := 0
+		it1h := 0
+		it1d := 0
+
+		for i := 0; i < len(candlesticks); i++ {
+			//Reading default candlesticks data
+			opentime := candlesticks[i].OpenTime
+			switch atr[x].Interval {
+			case "1m":
+				candlesticks[i].ATR[x] = atr[x].Keys[it1m].Value
+				it1m++
+			case "5m":
+				if opentime >= atr[x].Keys[it5m].Timestamp {
+					if it5m+1 < len(atr[x].Keys) {
+						if opentime >= atr[x].Keys[it5m+1].Timestamp {
+							it5m++
+						}
+						candlesticks[i].ATR[x] = atr[x].Keys[it5m].Value
+					} else {
+						candlesticks[i].ATR[x] = atr[x].Keys[it5m].Value
+					}
+				}
+			case "15m":
+				if opentime >= atr[x].Keys[it15m].Timestamp {
+					if it15m+1 < len(atr[x].Keys) {
+						if opentime >= atr[x].Keys[it15m+1].Timestamp {
+							it15m++
+						}
+						candlesticks[i].ATR[x] = atr[x].Keys[it15m].Value
+					} else {
+						candlesticks[i].ATR[x] = atr[x].Keys[it15m].Value
+					}
+				}
+			case "1h":
+				if opentime >= atr[x].Keys[it1h].Timestamp {
+					if it1h+1 < len(atr[x].Keys) {
+						if opentime >= atr[x].Keys[it1h+1].Timestamp {
+							it1h++
+						}
+						candlesticks[i].ATR[x] = atr[x].Keys[it1h].Value
+					} else {
+						candlesticks[i].ATR[x] = atr[x].Keys[it1h].Value
+					}
+				}
+			case "1d":
+				if opentime >= atr[x].Keys[it1d].Timestamp {
+					if it1d+1 < len(atr[x].Keys) {
+						if opentime >= atr[x].Keys[it1d+1].Timestamp {
+							it1d++
+						}
+						candlesticks[i].ATR[x] = atr[x].Keys[it1d].Value
+					} else {
+						candlesticks[i].ATR[x] = atr[x].Keys[it1d].Value
 					}
 				}
 

@@ -15,7 +15,6 @@ func (bot *RealBot) TestMACD() {
 
 	leverage := 1.00
 	profit, stop := 1.01, 0.9975
-
 	//Going through candlesticks
 	for coin := 0; coin < len(bot.Pairs); coin++ {
 		//Defining limits not to enter empty values of indicators
@@ -26,6 +25,7 @@ func (bot *RealBot) TestMACD() {
 		//Going manually though the candles
 		coinIndexBegin := i
 		//Long
+		//fmt.Println(candles[i].ATR[0])
 		if candles[i].MacD[0][2] >= 0 &&
 			candles[i-1].MacD[0][2] < 0 &&
 			candles[i-1].MacD[0][0] < 0 &&

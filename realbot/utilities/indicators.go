@@ -1,6 +1,8 @@
 package utilities
 
 import (
+	"math"
+
 	"github.com/CraZzier/bot/model"
 )
 
@@ -267,7 +269,7 @@ func RSI(candlesticks []*model.MyKline, whichValue string, interval string, inte
 	return &fullMoving
 }
 
-//BollingerBands retursn Exponential moving average - OK80%
+//BollingerBands retur
 func BollingerBands(candlesticks []*model.MyKline, smaValue int64, interval string, bandValue float64, indexstart int, indexstop int, pair string) *model.BollingerBands {
 
 	//Getting sma data and declaring containers
@@ -277,16 +279,16 @@ func BollingerBands(candlesticks []*model.MyKline, smaValue int64, interval stri
 	var BollingerBandsStamps []*model.SingleBollingerBandsStamp
 
 	//Calculating Bollinger for index
-	for i := indexstart + int(smaValue); i < indexstop; i++ {
+	for i := indexstart + int(smaValue) - 1; i < indexstop; i++ {
 
-		candleVal := candlesticks[i].Close
 		actualsma := smatable.Keys[smaiterator].Value
 		stDevParts := 0.00
 		//Going backwards to get average
-		for o := i - int(smaValue); o < i; o++ {
-			stDevParts += (candlesticks[o].Close - actualsma)
+		for o := i; o >= i-int(smaValue)+1; o-- {
+			stDevParts += math.Pow((candlesticks[o].Close - actualsma), 2)
 		}
-		stDev := (stDevParts + (candleVal - actualsma)) / float64((float64(smaValue) - 1))
+		stDev := stDevParts / (float64(smaValue))
+		stDev = math.Sqrt(stDev)
 		upperBand := actualsma + bandValue*stDev
 		lowerBand := actualsma - bandValue*stDev
 		Bstamp := &model.SingleBollingerBandsStamp{
@@ -294,6 +296,7 @@ func BollingerBands(candlesticks []*model.MyKline, smaValue int64, interval stri
 			Value:     []float64{upperBand, actualsma, lowerBand},
 		}
 		BollingerBandsStamps = append(BollingerBandsStamps, Bstamp)
+		smaiterator++
 
 	}
 	//Model data
@@ -306,4 +309,37 @@ func BollingerBands(candlesticks []*model.MyKline, smaValue int64, interval stri
 	BollingerBands.BandValue = bandValue
 	BollingerBands.E1 = smaValue
 	return &BollingerBands
+}
+
+//ATR
+func ATR(candlesticks []*model.MyKline, ATRValue int64, interval string, indexstart int, indexstop int, pair string) *model.ATR {
+
+	var ATR model.ATR
+	var ATRStamps []*model.SingleATRStamp
+
+	//Calculating Bollinger for index
+	for i := indexstart + int(ATRValue) - 1; i < indexstop; i++ {
+
+		stDevParts := 0.00
+		//Going backwards to get average
+		for o := i; o >= i-int(ATRValue)+1; o-- {
+			stDevParts += (candlesticks[o].Max - candlesticks[o].Min)
+		}
+		atr := stDevParts / (float64(ATRValue))
+
+		ATRstamp := &model.SingleATRStamp{
+			Timestamp: candlesticks[i].OpenTime,
+			Value:     atr,
+		}
+		ATRStamps = append(ATRStamps, ATRstamp)
+
+	}
+	//Model data
+	ATR.Keys = ATRStamps
+	ATR.Pair = pair
+	ATR.StartTimestamp = int64(indexstart)
+	ATR.StopTimestamp = int64(indexstop)
+	ATR.Interval = interval
+	ATR.ATRValue = ATRValue
+	return &ATR
 }

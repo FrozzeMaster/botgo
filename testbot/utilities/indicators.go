@@ -2,12 +2,15 @@ package utilities
 
 import (
 	"log"
+	"math"
 	"strconv"
 
 	"github.com/CraZzier/bot/model"
 	"github.com/adshao/go-binance/v2/futures"
 )
 
+//----Zamienianie na indicator w testbocie - konwersja strongow w candlestickach + dodanie indexstart stop i mili interval
+//----Merge są takie same
 //MovingAverage returns moving average struct
 func MovingAverage(candlesticks []*futures.Kline, whichValue string, interval string, intervalValue int64, startTimestamp int64, stopTimestamp int64, pair string) *model.MovingAverage {
 	firstAvailableTimestamp := candlesticks[0].OpenTime
@@ -374,16 +377,15 @@ func BollingerBands(candlesticks []*futures.Kline, smaValue int64, interval stri
 
 	//Calculating Bollinger for index
 	for i := indexstart + int(smaValue); i < indexstop; i++ {
-		cv, _ := strconv.ParseFloat(candlesticks[i].Close, 32)
-		candleVal := cv
 		actualsma := smatable.Keys[smaiterator].Value
 		stDevParts := 0.00
 		//Going backwards to get average
-		for o := i - int(smaValue); o < i; o++ {
+		for o := i; o >= i-int(smaValue)+1; o-- {
 			close, _ := strconv.ParseFloat(candlesticks[o].Close, 32)
-			stDevParts += (close - actualsma)
+			stDevParts += math.Pow((close - actualsma), 2)
 		}
-		stDev := (stDevParts + (candleVal - actualsma)) / float64((float64(smaValue) - 1))
+		stDev := stDevParts / (float64(smaValue))
+		stDev = math.Sqrt(stDev)
 		upperBand := actualsma + bandValue*stDev
 		lowerBand := actualsma - bandValue*stDev
 		Bstamp := &model.SingleBollingerBandsStamp{
@@ -404,4 +406,61 @@ func BollingerBands(candlesticks []*futures.Kline, smaValue int64, interval stri
 	BollingerBands.BandValue = bandValue
 	BollingerBands.E1 = smaValue
 	return &BollingerBands
+}
+
+//ATR
+func ATR(candlesticks []*futures.Kline, ATRValue int64, interval string, startTimestamp int64, stopTimestamp int64, pair string) *model.ATR {
+	firstAvailableTimestamp := candlesticks[0].OpenTime
+	var miliInterval int64
+	//Checking range if it doestn exceed the candlesticks
+	switch interval {
+	case "1m":
+		miliInterval = 60000 * ATRValue
+	case "5m":
+		miliInterval = 60000 * 5 * ATRValue
+	case "15m":
+		miliInterval = 60000 * 15 * ATRValue
+	case "1h":
+		miliInterval = 60000 * 60 * ATRValue
+	case "1d":
+		miliInterval = 60000 * 60 * 24 * ATRValue
+	case "1w":
+		miliInterval = 60000 * 60 * 24 * 7 * ATRValue
+	default:
+		miliInterval = 60000 * ATRValue
+	}
+	if firstAvailableTimestamp >= (startTimestamp - miliInterval) {
+		log.Fatal("Not in range")
+	}
+	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
+	var ATR model.ATR
+	var ATRStamps []*model.SingleATRStamp
+
+	//Calculating Bollinger for index
+	for i := indexstart + int(ATRValue) - 1; i < indexstop; i++ {
+
+		stDevParts := 0.00
+		//Going backwards to get average
+		for o := i; o >= i-int(ATRValue)+1; o-- {
+			mx, _ := strconv.ParseFloat(candlesticks[o].High, 32)
+			mn, _ := strconv.ParseFloat(candlesticks[o].Low, 32)
+			stDevParts += (mx - mn)
+		}
+		atr := stDevParts / (float64(ATRValue))
+
+		ATRstamp := &model.SingleATRStamp{
+			Timestamp: candlesticks[i].OpenTime,
+			Value:     atr,
+		}
+		ATRStamps = append(ATRStamps, ATRstamp)
+
+	}
+	//Model data
+	ATR.Keys = ATRStamps
+	ATR.Pair = pair
+	ATR.StartTimestamp = int64(indexstart)
+	ATR.StopTimestamp = int64(indexstop)
+	ATR.Interval = interval
+	ATR.ATRValue = ATRValue
+	return &ATR
 }

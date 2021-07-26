@@ -69,6 +69,8 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 	}
 	var ema1T, ema2T []*model.MovingAverage
 	var macd1T, macd2T []*model.MACD
+	var bb1T []*model.BollingerBands
+	var atr1T []*model.ATR
 	//Adding indicators to first candlesticks
 	for num := range pairs {
 		ema1 := rmf.EMA(bot.CustomKline[num][0], "close", "5m", 150, 0, 999, pairs[num])
@@ -76,19 +78,29 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 		macd1 := rmf.MACD(bot.CustomKline[num][0], "close", 7, 7, 12, "5m", 0, 999, pairs[num])
 		macd2 := rmf.MACD(bot.CustomKline[num][0], "close", 18, 13, 25, "5m", 0, 999, pairs[num])
 		bb := rmf.BollingerBands(bot.CustomKline[num][0], 20, "5m", 5.5, 0, 999, pairs[num])
+		atr := rmf.ATR(bot.CustomKline[num][0], 14, "5m", 0, 999, pairs[num])
+		if num == 0 {
+			//for testing indicators
+			//pretty.Println(atr)
+		}
 		var tableOfEMAs []*model.MovingAverage
 		var tableOfMACDs []*model.MACD
 		var tableOfBollingerBands []*model.BollingerBands
+		var tableOfATRs []*model.ATR
 		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
 		tableOfMACDs = append(tableOfMACDs, macd1, macd2)
 		tableOfBollingerBands = append(tableOfBollingerBands, bb)
+		tableOfATRs = append(tableOfATRs, atr)
 		bot.CustomKline[num][0] = rmf.MergeEMA(bot.CustomKline[num][0], tableOfEMAs, 0, 999)
 		bot.CustomKline[num][0] = rmf.MergeMACD(bot.CustomKline[num][0], tableOfMACDs, 0, 999)
 		bot.CustomKline[num][0] = rmf.MergeBollingerBands(bot.CustomKline[num][0], tableOfBollingerBands, 0, 999)
+		bot.CustomKline[num][0] = rmf.MergeATR(bot.CustomKline[num][0], tableOfATRs, 0, 999)
 		ema1T = append(ema1T, ema1)
 		ema2T = append(ema2T, ema2)
 		macd1T = append(macd1T, macd1)
 		macd2T = append(macd2T, macd2)
+		bb1T = append(bb1T, bb)
+		atr1T = append(atr1T, atr)
 	}
 	bot.NumberOfActivePositions()
 	//Creating channel for a communication
@@ -120,6 +132,8 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 				rmf.UpdateMACD(bot.CustomKline[o][0], macd2T[o])
 				rmf.UpdateEMA(bot.CustomKline[o][0], ema1T[o])
 				rmf.UpdateEMA(bot.CustomKline[o][0], ema2T[o])
+				rmf.UpdateBollingerBands(bot.CustomKline[o][0], bb1T[o])
+				rmf.UpdateATR(bot.CustomKline[o][0], atr1T[o])
 			}
 			//Checking account status
 			bot.GetAccountInfo()

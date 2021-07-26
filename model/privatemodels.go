@@ -81,6 +81,22 @@ type SingleBollingerBandsStamp struct {
 	Value     []float64
 }
 
+//ATR stores RSI model
+type ATR struct {
+	Keys           []*SingleATRStamp
+	Pair           string
+	StartTimestamp int64
+	StopTimestamp  int64
+	Interval       string
+	ATRValue       int64
+}
+
+//SingleATRStamp
+type SingleATRStamp struct {
+	Timestamp int64
+	Value     float64
+}
+
 //MyKline serves for handling data within one Kline
 type MyKline struct {
 	Open           float64
@@ -94,6 +110,7 @@ type MyKline struct {
 	MacD           [][]float64
 	RSI            []float64
 	BollingerBands [][]float64
+	ATR            []float64
 }
 
 //TransNumbers keep transaction numbers
