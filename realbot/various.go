@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/CraZzier/bot/model"
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/kr/pretty"
 )
@@ -122,4 +123,41 @@ func (bot *RealBot) ShowSavedSingleKlines(pairNum int, intervalNum int) {
 func (bot *RealBot) DisplayTime() string {
 	now := time.Now()
 	return now.Format("15:04:05 01-02-2006")
+}
+
+func (bot *RealBot) CalculateBollinger(newKline *model.MyKline, bollingerLength int, bollingerValue float64, atrValue int, intervalIndex int, pairIndex int) (float64, []float64) {
+	var maxLengthofIndicator int
+	if bollingerLength > atrValue {
+		maxLengthofIndicator = bollingerLength
+	} else {
+		maxLengthofIndicator = atrValue
+	}
+	//Length of Important candlesticks
+	liC := len(bot.CustomKline[pairIndex][intervalIndex])
+	//Important candlesticks
+	iC := bot.CustomKline[pairIndex][intervalIndex][liC-maxLengthofIndicator-1 : liC]
+	iC = append(iC, newKline)
+
+	liCC := len(iC) - 1
+	averageBollinger := 0.00
+	stDevParts := 0.00
+	atr := 0.00
+	for i := liCC; i > liCC-bollingerLength; i-- {
+		averageBollinger += iC[i].Close
+	}
+	averageBollinger = averageBollinger / float64(bollingerLength)
+	for i := liCC; i > liCC-bollingerLength; i-- {
+		stDevParts += math.Pow((iC[i].Close - averageBollinger), 2)
+	}
+	stDev := stDevParts / (float64(bollingerLength))
+	stDev = math.Sqrt(stDev)
+	upperBand := averageBollinger + bollingerValue*stDev
+	lowerBand := averageBollinger - bollingerValue*stDev
+	for i := liCC; i > liCC-atrValue; i-- {
+		atr += iC[i].Max - iC[i].Min
+	}
+	newAtrValue := atr / float64(atrValue)
+	newBollingerValues := []float64{upperBand, averageBollinger, lowerBand}
+	return newAtrValue, newBollingerValues
+
 }

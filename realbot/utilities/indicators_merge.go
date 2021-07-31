@@ -4,6 +4,8 @@ import (
 	"github.com/CraZzier/bot/model"
 )
 
+///-----All of the merges are to be copied and modified - it's the same patter--------/////////
+
 //MergeMACD adds macd to mycandles
 func MergeMACD(candlesticks []*model.MyKline, macd []*model.MACD, indexstart int, indexstop int) []*model.MyKline {
 	//Variable containers

@@ -4,6 +4,8 @@ import (
 	"github.com/CraZzier/bot/model"
 )
 
+//Merges can be copied into realbot
+
 //MergeMACD adds macd to mycandles
 func MergeRSI(candlesticks []*model.MyKline, rsi []*model.RSI, indexstart int, indexstop int) []*model.MyKline {
 
