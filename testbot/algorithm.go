@@ -510,26 +510,302 @@ func AlgoMacdSPC(usdtEntry float64, feeMaker float64, feeTaker float64, candlest
 	return finalObject
 }
 
+// //AlgoMacdAP is algorithm MACD with ALL PAIRS
+// func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesticks [][][]*futures.Kline, from string, to string, pairs []string) *model.AlgorithmTransactionsFull {
+// 	var pairNum []int
+// 	for _, pair := range pairs {
+// 		switch pair {
+// 		case "BTCUSDT":
+// 			pairNum = append(pairNum, 0)
+// 		case "ETHUSDT":
+// 			pairNum = append(pairNum, 1)
+// 		case "ADAUSDT":
+// 			pairNum = append(pairNum, 2)
+// 		case "NEOUSDT":
+// 			pairNum = append(pairNum, 3)
+// 		case "XLMUSDT":
+// 			pairNum = append(pairNum, 4)
+// 		case "XRPUSDT":
+// 			pairNum = append(pairNum, 5)
+// 		case "LINKUSDT":
+// 			pairNum = append(pairNum, 6)
+// 		}
+// 	}
+// 	//Declaring important variables
+// 	var it int
+// 	transNumbers := &model.TransNumbers{
+// 		TransAmount:  0,
+// 		SuccessTrans: 0,
+// 		LostTrans:    0,
+// 		FeeSum:       0.00,
+// 	}
+// 	leverage := 1.00
+// 	profit, stop := 1.01, 0.9975
+// 	//Preparation for checking start index and stop index
+// 	fromTimestamp, toTimestamp := DateToTimestampRange(from), DateToTimestampRange(to)
+// 	var indexstart []int
+// 	var indexstop []int
+// 	for _, num := range pairNum {
+// 		istart, istop := utilities.GetStartStopCandles(candlesticks[num][1], fromTimestamp, toTimestamp)
+// 		indexstart = append(indexstart, istart)
+// 		indexstop = append(indexstop, istop)
+// 	}
+// 	//Container for Trasnactions
+// 	var transactions []*model.AlgorithmTransactions
+// 	var mycandlesticks []*model.MyKline
+// 	var allcandlesticks [][]*model.MyKline
+// 	//Getting SMA and EMA
+// 	for i, num := range pairNum {
+// 		ema1 := utilities.EmovingAverage(candlesticks[num][2], "close", "15m", 50, fromTimestamp, toTimestamp, pairs[num])
+// 		ema2 := utilities.EmovingAverage(candlesticks[num][3], "close", "1h", 50, fromTimestamp, toTimestamp, pairs[num])
+// 		macd1 := utilities.MACD(candlesticks[num][1], "close", 7, 7, 12, "5m", fromTimestamp, toTimestamp, pairs[num])
+// 		macd2 := utilities.MACD(candlesticks[num][1], "close", 18, 13, 25, "5m", fromTimestamp, toTimestamp, pairs[num])
+// 		var tableOfEMAs []*model.MovingAverage
+// 		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
+// 		var tableOfMACDs []*model.MACD
+// 		tableOfMACDs = append(tableOfMACDs, macd1, macd2)
+// 		mycandlesticks = utilities.CandlesToMyCandles(candlesticks[num][1], indexstart[i], indexstop[i])
+// 		mycandlesticks = utilities.MergeEMA(mycandlesticks, tableOfEMAs, indexstart[i], indexstop[i])
+// 		mycandlesticks = utilities.MergeMACD(mycandlesticks, tableOfMACDs, indexstart[i], indexstop[i])
+// 		allcandlesticks = append(allcandlesticks, mycandlesticks)
+// 		pretty.Println()
+
+// 	}
+// 	it = len(allcandlesticks[0])
+// 	//Going through candlesticks
+// 	for i := 0; i < it-3; i++ {
+// 		for coin := 0; coin < len(allcandlesticks); coin++ {
+// 			coinIndexBegin := i
+// 			if allcandlesticks[coin][i].MacD[0][1] >= 0 && allcandlesticks[coin][i+1].MacD[0][1] < 0 && allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] {
+// 				//Going over next candlesticks
+// 				i = i + 2
+// 				//Checking 1 PERIOD /////////////////////////////////////////////////////////////
+// 				indexPeriod1 := i
+// 				shouldStop := 0
+// 				for allcandlesticks[coin][i].MacD[0][2] < 0 && i < it-3 {
+// 					if allcandlesticks[coin][i].MacD[0][0] > 0 || allcandlesticks[coin][i].Emas[0] < allcandlesticks[coin][i].Emas[1] {
+// 						shouldStop = 1
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if i-indexPeriod1 < 3 || i-indexPeriod1 > 150 || shouldStop == 1 {
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+// 				macMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod1:i], "min", "macd", 0)
+
+// 				//Checking 2 PERIOD //////////////////////////////////////////////////////////////
+// 				indexPeriod2 := i
+// 				shouldStop = 0
+// 				for allcandlesticks[coin][i].MacD[0][2] >= 0 && allcandlesticks[coin][i].MacD[0][0] < 0 && i < it-3 {
+// 					if allcandlesticks[coin][i].MacD[0][0] > 0 || allcandlesticks[coin][i].Emas[0] < allcandlesticks[coin][i].Emas[1] {
+// 						shouldStop = 1
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if i-indexPeriod2 < 3 || i-indexPeriod2 > 40 && shouldStop == 1 {
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+
+// 				//Checking 3 PERIOD //////////////////////////////////////////////////////////////
+// 				indexPeriod3 := i
+// 				for allcandlesticks[coin][i].MacD[0][2] < 0 && allcandlesticks[coin][i].MacD[0][0] < 0 && i < it-3 {
+// 					if allcandlesticks[coin][i].MacD[0][0] > 0 || allcandlesticks[coin][i].Emas[0] < allcandlesticks[coin][i].Emas[1] {
+// 						shouldStop = 1
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if i-indexPeriod3 < 3 || i-indexPeriod3 > 150 {
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+// 				candleMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "body", 0)
+// 				macMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "macd", 0)
+// 				candleMinPeriod3Tail := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "tail", 0)
+// 				var beg1Period int
+// 				for iback := indexPeriod1; allcandlesticks[coin][iback].MacD[0][2] < 0; iback-- {
+// 					beg1Period = iback
+// 				}
+// 				candleMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][beg1Period:indexPeriod2-1], "min", "body", 0)
+// 				//Checking final conditions ///////////////////////////////////////////////////////////
+// 				if candleMinPeriod1 <= candleMinPeriod3 || macMinPeriod1 >= macMinPeriod3 {
+// 					i = coinIndexBegin
+// 					continue
+// 				} else {
+// 					i++
+// 				}
+// 				//Starting transaction
+// 				stop = candleMinPeriod3Tail / allcandlesticks[coin][i].Open
+// 				profit = 1 + 3*(1-stop)
+// 				if stop < 1 {
+// 					leverage = 0.05 / (1 - stop)
+// 				} else {
+// 					leverage = 0.05 / (-1 + stop)
+// 				}
+// 				leverage = math.Round(leverage)
+// 				if stop >= 0.995 {
+// 					fmt.Println("Za niski target")
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+// 				transData := utilities.StartingTransaction(allcandlesticks[coin][i], transNumbers, usdtEntry, leverage, stop, profit, feeTaker, "Long")
+// 				//Simulating begin in trade
+// 				for i < it-2 {
+// 					if allcandlesticks[coin][i].Min <= transData.Stoploss[0].Value {
+// 						transData = utilities.ClosingTransaction(allcandlesticks[coin][i], transNumbers, feeMaker, transData.Stoploss[0].Value, transData)
+// 						usdtEntry = transData.FinishBalance
+// 						transactions = append(transactions, transData)
+// 						break
+// 					}
+// 					if transData.Target >= allcandlesticks[coin][i].Min && transData.Target <= allcandlesticks[coin][i].Max {
+// 						transData = utilities.ClosingTransaction(mycandlesticks[i], transNumbers, feeMaker, transData.Target, transData)
+// 						usdtEntry = transData.FinishBalance
+// 						transactions = append(transactions, transData)
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if usdtEntry <= 0 {
+// 					break
+// 				}
+// 			}
+// 			if allcandlesticks[coin][i].MacD[1][1] <= 0 && allcandlesticks[coin][i+1].MacD[1][1] > 0 && allcandlesticks[coin][i].Emas[0] < allcandlesticks[coin][i].Emas[1] {
+// 				//Going over next candlesticks
+// 				i = i + 2
+
+// 				//Checking 1 PERIOD /////////////////////////////////////////////////////////////
+// 				indexPeriod1 := i
+// 				shouldStop := 0
+// 				for allcandlesticks[coin][i].MacD[1][2] > 0 && i < it-3 {
+// 					if allcandlesticks[coin][i].MacD[1][0] < 0 || allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] {
+// 						shouldStop = 1
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if i-indexPeriod1 < 3 || i-indexPeriod1 > 150 || shouldStop == 1 {
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+// 				macMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod1:i], "max", "macd", 1)
+
+// 				//Checking 2 PERIOD //////////////////////////////////////////////////////////////
+// 				indexPeriod2 := i
+// 				shouldStop = 0
+// 				for allcandlesticks[coin][i].MacD[1][2] <= 0 && allcandlesticks[coin][i].MacD[1][0] > 0 && i < it-3 {
+// 					if allcandlesticks[coin][i].MacD[1][0] < 0 || allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] {
+// 						shouldStop = 1
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if i-indexPeriod2 < 3 || i-indexPeriod2 > 40 && shouldStop == 1 {
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+
+// 				//Checking 3 PERIOD //////////////////////////////////////////////////////////////
+// 				indexPeriod3 := i
+// 				for allcandlesticks[coin][i].MacD[1][2] > 0 && allcandlesticks[coin][i].MacD[1][0] > 0 && i < it-3 {
+// 					if allcandlesticks[coin][i].MacD[1][0] < 0 || allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] {
+// 						shouldStop = 1
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if i-indexPeriod3 < 3 || i-indexPeriod3 > 150 {
+// 					i = coinIndexBegin
+// 					continue
+// 				}
+// 				candleMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "body", 1)
+// 				macMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "macd", 1)
+// 				candleMinPeriod3Tail := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "tail", 1)
+// 				var beg1Period int
+// 				for iback := indexPeriod1; allcandlesticks[coin][iback].MacD[1][2] > 0; iback-- {
+// 					beg1Period = iback
+// 				}
+// 				candleMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][beg1Period:indexPeriod2-1], "max", "body", 1)
+// 				//Checking final conditions ///////////////////////////////////////////////////////////
+// 				if candleMinPeriod1 >= candleMinPeriod3 || macMinPeriod1 <= macMinPeriod3 {
+// 					i = coinIndexBegin
+// 					continue
+// 				} else {
+// 					i++
+// 				}
+// 				//Starting transaction
+// 				stop = candleMinPeriod3Tail / allcandlesticks[coin][i].Open
+// 				profit = 1 + 3*(1-stop)
+// 				if stop < 1 {
+// 					leverage = 0.05 / (1 - stop)
+// 				} else {
+// 					leverage = 0.05 / (-1 + stop)
+// 				}
+// 				leverage = math.Round(leverage)
+// 				if stop <= 1.005 {
+// 					//fmt.Println("Za niski target")
+// 					continue
+// 				}
+// 				transData := utilities.StartingTransaction(allcandlesticks[coin][i], transNumbers, usdtEntry, leverage, stop, profit, feeTaker, "Short")
+// 				//Simulating begin in trade
+// 				for i < it-2 {
+// 					if allcandlesticks[coin][i].Max >= transData.Stoploss[0].Value {
+// 						transData = utilities.ClosingTransaction(allcandlesticks[coin][i], transNumbers, feeMaker, transData.Stoploss[0].Value, transData)
+// 						usdtEntry = transData.FinishBalance
+// 						transactions = append(transactions, transData)
+// 						break
+// 					}
+// 					if transData.Target >= allcandlesticks[coin][i].Min && transData.Target <= allcandlesticks[coin][i].Max {
+// 						transData = utilities.ClosingTransaction(allcandlesticks[coin][i], transNumbers, feeMaker, transData.Target, transData)
+// 						usdtEntry = transData.FinishBalance
+// 						transactions = append(transactions, transData)
+// 						break
+// 					}
+// 					i++
+// 				}
+// 				if usdtEntry <= 0 {
+// 					break
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	finalObject := &model.AlgorithmTransactionsFull{
+// 		Transaction:     transactions,
+// 		Finalusdt:       usdtEntry,
+// 		Transamount:     int64(transNumbers.TransAmount),
+// 		SuccessfulTrans: int64(transNumbers.SuccessTrans),
+// 		LostTrans:       int64(transNumbers.LostTrans),
+// 	}
+// 	return finalObject
+// }
+
 //AlgoMacdAP is algorithm MACD with ALL PAIRS
 func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesticks [][][]*futures.Kline, from string, to string, pairs []string) *model.AlgorithmTransactionsFull {
 	var pairNum []int
-	for _, pair := range pairs {
-		switch pair {
-		case "BTCUSDT":
-			pairNum = append(pairNum, 0)
-		case "ETHUSDT":
-			pairNum = append(pairNum, 1)
-		case "ADAUSDT":
-			pairNum = append(pairNum, 2)
-		case "NEOUSDT":
-			pairNum = append(pairNum, 3)
-		case "XLMUSDT":
-			pairNum = append(pairNum, 4)
-		case "XRPUSDT":
-			pairNum = append(pairNum, 5)
-		case "LINKUSDT":
-			pairNum = append(pairNum, 6)
-		}
+	// for _, pair := range pairs {
+	// 	switch pair {
+	// 	case "1INCHUSDT":
+	// 		pairNum = append(pairNum, 0)
+	// 	case "AAVEUSDT":
+	// 		pairNum = append(pairNum, 1)
+	// 	case "ADAUSDT":
+	// 		pairNum = append(pairNum, 2)
+	// 	case "NEOUSDT":
+	// 		pairNum = append(pairNum, 3)
+	// 	case "XLMUSDT":
+	// 		pairNum = append(pairNum, 4)
+	// 	case "XRPUSDT":
+	// 		pairNum = append(pairNum, 5)
+	// 	case "LINKUSDT":
+	// 		pairNum = append(pairNum, 6)
+	// 	}
+	// }
+	for i := range pairs {
+		pairNum = append(pairNum, i)
 	}
 	//Declaring important variables
 	var it int
@@ -542,41 +818,60 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 	leverage := 1.00
 	profit, stop := 1.01, 0.9975
 	//Preparation for checking start index and stop index
-	fromTimestamp, toTimestamp := DateToTimestampRange(from), DateToTimestampRange(to)
 	var indexstart []int
 	var indexstop []int
-	for _, num := range pairNum {
-		istart, istop := utilities.GetStartStopCandles(candlesticks[num][1], fromTimestamp, toTimestamp)
-		indexstart = append(indexstart, istart)
-		indexstop = append(indexstop, istop)
-	}
+	// fromTimestamp, toTimestamp := DateToTimestampRange(from), DateToTimestampRange(to)
+	// for _, num := range pairNum {
+	// 	istart, istop := utilities.GetStartStopCandles(candlesticks[num][1], fromTimestamp, toTimestamp)
+	// 	indexstart = append(indexstart, istart)
+	// 	indexstop = append(indexstop, istop)
+	// }
 	//Container for Trasnactions
 	var transactions []*model.AlgorithmTransactions
 	var mycandlesticks []*model.MyKline
 	var allcandlesticks [][]*model.MyKline
 	//Getting SMA and EMA
 	for i, num := range pairNum {
+		fromTimestamp, toTimestamp := candlesticks[num][1][0].OpenTime+(60000*60*101)+1, DateToTimestampRange(to)
+		pretty.Println(candlesticks[num][1][0].OpenTime)
+		pretty.Println(candlesticks[num][1][0].OpenTime+(60000*60*101)+1, pairs[i])
+		istart, istop := utilities.GetStartStopCandles(candlesticks[num][1], fromTimestamp, toTimestamp)
+		indexstart = append(indexstart, istart)
+		indexstop = append(indexstop, istop)
 		ema1 := utilities.EmovingAverage(candlesticks[num][2], "close", "15m", 50, fromTimestamp, toTimestamp, pairs[num])
 		ema2 := utilities.EmovingAverage(candlesticks[num][3], "close", "1h", 50, fromTimestamp, toTimestamp, pairs[num])
-		macd1 := utilities.MACD(candlesticks[num][1], "close", 7, 7, 12, "5m", fromTimestamp, toTimestamp, pairs[num])
-		macd2 := utilities.MACD(candlesticks[num][1], "close", 18, 13, 25, "5m", fromTimestamp, toTimestamp, pairs[num])
+
+		ema3 := utilities.EmovingAverage(candlesticks[num][2], "close", "15m", 20, fromTimestamp, toTimestamp, pairs[num])
+		ema4 := utilities.EmovingAverage(candlesticks[num][3], "close", "1h", 20, fromTimestamp, toTimestamp, pairs[num])
+
+		ema5 := utilities.EmovingAverage(candlesticks[num][2], "close", "15m", 100, fromTimestamp, toTimestamp, pairs[num])
+		ema6 := utilities.EmovingAverage(candlesticks[num][3], "close", "1h", 100, fromTimestamp, toTimestamp, pairs[num])
+
+		macd1 := utilities.MACD(candlesticks[num][1], "close", 9, 12, 26, "5m", fromTimestamp, toTimestamp, pairs[num])
+		macd2 := utilities.MACD(candlesticks[num][1], "close", 9, 12, 26, "5m", fromTimestamp, toTimestamp, pairs[num])
+
+		rsi := utilities.RSI(candlesticks[num][1], "close", "5m", 9, fromTimestamp, toTimestamp, pairs[num])
+		// pretty.Println(rsi)
 		var tableOfEMAs []*model.MovingAverage
-		tableOfEMAs = append(tableOfEMAs, ema1, ema2)
+		tableOfEMAs = append(tableOfEMAs, ema1, ema2, ema3, ema4, ema5, ema6)
 		var tableOfMACDs []*model.MACD
 		tableOfMACDs = append(tableOfMACDs, macd1, macd2)
+		var tableofRSIs []*model.RSI
+		tableofRSIs = append(tableofRSIs, rsi)
 		mycandlesticks = utilities.CandlesToMyCandles(candlesticks[num][1], indexstart[i], indexstop[i])
 		mycandlesticks = utilities.MergeEMA(mycandlesticks, tableOfEMAs, indexstart[i], indexstop[i])
 		mycandlesticks = utilities.MergeMACD(mycandlesticks, tableOfMACDs, indexstart[i], indexstop[i])
+		mycandlesticks = utilities.MergeRSI(mycandlesticks, tableofRSIs, indexstart[i], indexstop[i])
 		allcandlesticks = append(allcandlesticks, mycandlesticks)
 		pretty.Println()
 
 	}
-	it = len(allcandlesticks[0])
 	//Going through candlesticks
-	for i := 0; i < it-3; i++ {
-		for coin := 0; coin < len(allcandlesticks); coin++ {
+	for coin := 0; coin < len(allcandlesticks); coin++ {
+		it = len(allcandlesticks[coin])
+		for i := 0; i < it-3; i++ {
 			coinIndexBegin := i
-			if allcandlesticks[coin][i].MacD[0][1] >= 0 && allcandlesticks[coin][i+1].MacD[0][1] < 0 && allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] {
+			if allcandlesticks[coin][i].MacD[0][1] >= 0 && allcandlesticks[coin][i+1].MacD[0][1] < 0 && allcandlesticks[coin][i].Emas[0] > allcandlesticks[coin][i].Emas[1] && allcandlesticks[coin][i].Emas[2] < allcandlesticks[coin][i].Emas[3] {
 				//Going over next candlesticks
 				i = i + 2
 				//Checking 1 PERIOD /////////////////////////////////////////////////////////////
@@ -594,6 +889,7 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 					continue
 				}
 				macMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod1:i], "min", "macd", 0)
+				rsiMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod1:i], "min", "rsi", 0)
 
 				//Checking 2 PERIOD //////////////////////////////////////////////////////////////
 				indexPeriod2 := i
@@ -625,6 +921,7 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				candleMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "body", 0)
 				macMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "macd", 0)
+				rsiMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "rsi", 0)
 				candleMinPeriod3Tail := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "min", "tail", 0)
 				var beg1Period int
 				for iback := indexPeriod1; allcandlesticks[coin][iback].MacD[0][2] < 0; iback-- {
@@ -632,7 +929,8 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				candleMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][beg1Period:indexPeriod2-1], "min", "body", 0)
 				//Checking final conditions ///////////////////////////////////////////////////////////
-				if candleMinPeriod1 <= candleMinPeriod3 || macMinPeriod1 >= macMinPeriod3 {
+				if candleMinPeriod1 <= candleMinPeriod3 || (macMinPeriod1) >= macMinPeriod3 || (rsiMinPeriod1) >= rsiMinPeriod3 {
+					// if candleMinPeriod1 >= candleMinPeriod3*0.995 || candleMinPeriod1 <= candleMinPeriod3 || (macMinPeriod1) >= macMinPeriod3 || (macMinPeriod1*0.8) <= macMinPeriod3 {
 					i = coinIndexBegin
 					continue
 				} else {
@@ -640,7 +938,7 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				//Starting transaction
 				stop = candleMinPeriod3Tail / allcandlesticks[coin][i].Open
-				profit = 1 + 3*(1-stop)
+				profit = 1 + 2*(1-stop)
 				if stop < 1 {
 					leverage = 0.05 / (1 - stop)
 				} else {
@@ -648,12 +946,13 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				leverage = math.Round(leverage)
 				if stop >= 0.995 {
-					fmt.Println("Za niski target")
+					fmt.Println("Za niski target", pairs[coin])
 					i = coinIndexBegin
 					continue
 				}
 				transData := utilities.StartingTransaction(allcandlesticks[coin][i], transNumbers, usdtEntry, leverage, stop, profit, feeTaker, "Long")
 				//Simulating begin in trade
+				// pretty.Println(i, it, "1")
 				for i < it-2 {
 					if allcandlesticks[coin][i].Min <= transData.Stoploss[0].Value {
 						transData = utilities.ClosingTransaction(allcandlesticks[coin][i], transNumbers, feeMaker, transData.Stoploss[0].Value, transData)
@@ -661,8 +960,9 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 						transactions = append(transactions, transData)
 						break
 					}
+					// pretty.Println(i, it)
 					if transData.Target >= allcandlesticks[coin][i].Min && transData.Target <= allcandlesticks[coin][i].Max {
-						transData = utilities.ClosingTransaction(mycandlesticks[i], transNumbers, feeMaker, transData.Target, transData)
+						transData = utilities.ClosingTransaction(allcandlesticks[coin][i], transNumbers, feeMaker, transData.Target, transData)
 						usdtEntry = transData.FinishBalance
 						transactions = append(transactions, transData)
 						break
@@ -673,7 +973,11 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 					break
 				}
 			}
-			if allcandlesticks[coin][i].MacD[1][1] <= 0 && allcandlesticks[coin][i+1].MacD[1][1] > 0 && allcandlesticks[coin][i].Emas[0] < allcandlesticks[coin][i].Emas[1] {
+			// pretty.Println(i, len(allcandlesticks[coin]))
+			if i >= it-3 {
+				continue
+			}
+			if allcandlesticks[coin][i].MacD[1][1] <= 0 && allcandlesticks[coin][i+1].MacD[1][1] > 0 && allcandlesticks[coin][i].Emas[0] < allcandlesticks[coin][i].Emas[1] && allcandlesticks[coin][i].Emas[2] > allcandlesticks[coin][i].Emas[3] {
 				//Going over next candlesticks
 				i = i + 2
 
@@ -692,6 +996,7 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 					continue
 				}
 				macMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod1:i], "max", "macd", 1)
+				rsiMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod1:i], "max", "rsi", 1)
 
 				//Checking 2 PERIOD //////////////////////////////////////////////////////////////
 				indexPeriod2 := i
@@ -723,6 +1028,7 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				candleMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "body", 1)
 				macMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "macd", 1)
+				rsiMinPeriod3 := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "rsi", 1)
 				candleMinPeriod3Tail := utilities.Period1ValuesBody(allcandlesticks[coin][indexPeriod3:i], "max", "tail", 1)
 				var beg1Period int
 				for iback := indexPeriod1; allcandlesticks[coin][iback].MacD[1][2] > 0; iback-- {
@@ -730,7 +1036,8 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				candleMinPeriod1 := utilities.Period1ValuesBody(allcandlesticks[coin][beg1Period:indexPeriod2-1], "max", "body", 1)
 				//Checking final conditions ///////////////////////////////////////////////////////////
-				if candleMinPeriod1 >= candleMinPeriod3 || macMinPeriod1 <= macMinPeriod3 {
+				// if candleMinPeriod1 <= candleMinPeriod3*0.995 || candleMinPeriod1 >= candleMinPeriod3 || (macMinPeriod1) <= macMinPeriod3 || (macMinPeriod1*0.8) >= macMinPeriod3 {
+				if candleMinPeriod1 >= candleMinPeriod3 || (macMinPeriod1) <= macMinPeriod3 || (rsiMinPeriod1) <= rsiMinPeriod3 {
 					i = coinIndexBegin
 					continue
 				} else {
@@ -738,7 +1045,7 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				//Starting transaction
 				stop = candleMinPeriod3Tail / allcandlesticks[coin][i].Open
-				profit = 1 + 3*(1-stop)
+				profit = 1 + 2*(1-stop)
 				if stop < 1 {
 					leverage = 0.05 / (1 - stop)
 				} else {
@@ -746,7 +1053,8 @@ func AlgoMacdAP(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 				}
 				leverage = math.Round(leverage)
 				if stop <= 1.005 {
-					//fmt.Println("Za niski target")
+					fmt.Println("Za niski target - short", pairs[coin])
+					i = coinIndexBegin
 					continue
 				}
 				transData := utilities.StartingTransaction(allcandlesticks[coin][i], transNumbers, usdtEntry, leverage, stop, profit, feeTaker, "Short")
@@ -831,8 +1139,8 @@ func AlgoRsiAPC(usdtEntry float64, feeMaker float64, feeTaker float64, candlesti
 	for i, num := range pairNum {
 		ema1 := utilities.EmovingAverage(candlesticks[num][2], "close", "15m", 50, fromTimestamp, toTimestamp, pairs[num])
 		ema2 := utilities.EmovingAverage(candlesticks[num][3], "close", "1h", 50, fromTimestamp, toTimestamp, pairs[num])
-		macd1 := utilities.MACD(candlesticks[num][1], "close", 7, 7, 12, "5m", fromTimestamp, toTimestamp, pairs[num])
-		macd2 := utilities.MACD(candlesticks[num][1], "close", 18, 13, 25, "5m", fromTimestamp, toTimestamp, pairs[num])
+		macd1 := utilities.MACD(candlesticks[num][1], "close", 9, 12, 26, "5m", fromTimestamp, toTimestamp, pairs[num])
+		macd2 := utilities.MACD(candlesticks[num][1], "close", 9, 12, 26, "5m", fromTimestamp, toTimestamp, pairs[num])
 		rsi := utilities.RSI(candlesticks[num][1], "close", "5m", 14, fromTimestamp, toTimestamp, pairs[num])
 		var tableOfEMAs []*model.MovingAverage
 		tableOfEMAs = append(tableOfEMAs, ema1, ema2)

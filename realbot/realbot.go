@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	apiKey        = "XOIxbjxLWErp4pTGqOs0svp1PWgPuUgyz7QVp735QVinF3T5i43VrpQU50jVIqQW"
-	secretKey     = "tRJ75yZh8gq9Hb1gwTfESz083wlwgd2qt71BprinrODm7BijYDmqiI90YftksIAz"
+	apiKey        = "WcvzTuzjD3e87xykTekJ3wxWFMallb43VWdDyb5UyN2uUMdHGYfm5MTNbPtPuudV"
+	secretKey     = "snIB6UDgkhnaAYjcoj8JlsNnfL9uETG0Ug4Ie5Z2TIc9B6w1s6TUQH9WkZbHrNwT"
 	futuresClient = binance.NewFuturesClient(apiKey, secretKey) // USDT-M Futures
 )
 

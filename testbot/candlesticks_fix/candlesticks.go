@@ -3,12 +3,14 @@ package candlesticks
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/CraZzier/bot/model"
 	"github.com/adshao/go-binance/v2/futures"
 )
 
@@ -251,4 +253,72 @@ func ConvertInterval(candlesticks []*futures.Kline, interval string, pair string
 			fmt.Println(err)
 		}
 	}
+}
+
+//ConvertInterval converts cnadlesticks into diffrent timeframe
+func ConvertToBinary(candlesticks []*model.MyKline, deviation float64) {
+	txt := ""
+	reminder := 0.0
+	for i, candlestick := range candlesticks {
+		if candlestick.Close >= candlestick.Open {
+			riseToMax := (candlestick.Max / candlestick.Open) - 1
+			howMany1 := int(riseToMax / deviation)
+			reminder += riseToMax/deviation - float64(howMany1)
+			txt += strings.Repeat("1", howMany1+int(reminder))
+			if reminder >= 1 {
+				reminder -= 1
+			}
+			if candlestick.Close < candlestick.Max {
+				fallToClose := (candlestick.Max / candlestick.Close) - 1
+				howMany0 := int(fallToClose / deviation)
+				reminder -= fallToClose/deviation - float64(howMany0)
+				txt += strings.Repeat("0", howMany0+int(-reminder))
+				if reminder <= -1 {
+					reminder += 1
+				}
+			}
+		} else {
+			fallToMin := (candlestick.Open / candlestick.Min) - 1
+			howMany0 := int(fallToMin / deviation)
+			reminder -= fallToMin/deviation - float64(howMany0)
+			txt += strings.Repeat("0", howMany0+int(-reminder))
+			if reminder <= -1 {
+				reminder += 1
+			}
+			if candlestick.Close > candlestick.Min {
+				riseToClose := (candlestick.Close / candlestick.Min) - 1
+				howMany1 := int(riseToClose / deviation)
+				reminder += riseToClose/deviation - float64(howMany1)
+				txt += strings.Repeat("1", howMany1+int(reminder))
+				if reminder >= 1 {
+					reminder -= 1
+				}
+			}
+		}
+		if i%1000 == 0 {
+			// txt += TimestampToDate(candlestick.OpenTime) + "\n"
+		}
+	}
+	f, err := os.Create("data.txt")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	_, err2 := f.WriteString(txt)
+
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+
+	fmt.Println("done")
+}
+
+//TimestampToDate Timestamp(miliseconds) -> 02/01/2006 15:04:05
+func TimestampToDate(timestamp int64) string {
+	t := time.Unix(0, timestamp*int64(time.Millisecond))
+	strDate := t.Format("02/01/2006 15:04:05")
+	return strDate
 }

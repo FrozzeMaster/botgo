@@ -7,6 +7,7 @@ import (
 
 	"github.com/CraZzier/bot/model"
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/kr/pretty"
 )
 
 //----Zamienianie na indicator w testbocie - konwersja strongow w candlestickach + dodanie indexstart stop i mili interval
@@ -251,7 +252,11 @@ func EmovingAverage(candlesticks []*futures.Kline, whichValue string, interval s
 		miliInterval = 60000 * intervalValue
 	}
 	if firstAvailableTimestamp >= (startTimestamp - miliInterval) {
-		log.Fatal("Not in range")
+		pretty.Println(firstAvailableTimestamp)
+		pretty.Println(startTimestamp)
+		pretty.Println(miliInterval)
+		pretty.Println(startTimestamp - miliInterval)
+		log.Fatal("Not in range", interval)
 	}
 	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
 	//Getting sma data and setting first EMA

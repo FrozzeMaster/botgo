@@ -162,6 +162,13 @@ func Period1ValuesBody(candlesticks []*model.MyKline, MinOrMax string, BodyOrTai
 					mCandle = v.MacD[macdNum][0]
 				}
 			}
+
+		case "rsi":
+			for _, v := range candlesticks {
+				if v.RSI[0] < mCandle {
+					mCandle = v.RSI[0]
+				}
+			}
 		}
 	case "max":
 		mCandle = 0
@@ -176,6 +183,12 @@ func Period1ValuesBody(candlesticks []*model.MyKline, MinOrMax string, BodyOrTai
 			for _, v := range candlesticks {
 				if v.MacD[macdNum][0] > mCandle {
 					mCandle = v.MacD[macdNum][0]
+				}
+			}
+		case "rsi":
+			for _, v := range candlesticks {
+				if v.RSI[0] > mCandle {
+					mCandle = v.RSI[0]
 				}
 			}
 		case "tail":

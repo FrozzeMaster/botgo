@@ -4,8 +4,12 @@ import (
 	"github.com/CraZzier/bot/model"
 )
 
-//MergeMACD adds macd to mycandles
+//Mergersi adds rsi to mycandles
 func MergeRSI(candlesticks []*model.MyKline, rsi []*model.RSI, indexstart int, indexstop int) []*model.MyKline {
+
+	for i := 0; i < len(candlesticks)-1; i++ {
+		candlesticks[i].RSI = make([]float64, len(rsi))
+	}
 
 	for x := 0; x < len(rsi); x++ {
 		it1m := 0
@@ -14,7 +18,7 @@ func MergeRSI(candlesticks []*model.MyKline, rsi []*model.RSI, indexstart int, i
 		it1h := 0
 		it1d := 0
 
-		for i := 0; i < len(candlesticks); i++ {
+		for i := 0; i < len(candlesticks)-1; i++ {
 			//Reading default candlesticks data
 			opentime := candlesticks[i].OpenTime
 			switch rsi[x].Interval {
@@ -27,6 +31,7 @@ func MergeRSI(candlesticks []*model.MyKline, rsi []*model.RSI, indexstart int, i
 						if opentime >= rsi[x].Keys[it5m+1].Timestamp {
 							it5m++
 						}
+						// pretty.Println(len(candlesticks[i].RSI))
 						candlesticks[i].RSI[x] = rsi[x].Keys[it5m].RSI
 					} else {
 						candlesticks[i].RSI[x] = rsi[x].Keys[it5m].RSI
