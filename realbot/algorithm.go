@@ -3,11 +3,13 @@ package realbot
 import (
 	"math"
 
+	"github.com/CraZzier/bot/model"
 	rmf "github.com/CraZzier/bot/realbot/utilities"
 	"github.com/kr/pretty"
 )
 
 func (bot *RealBot) TestMACD() {
+
 	//Declaring important variables
 	var it int
 	notifier := NewNotifier()
@@ -210,5 +212,40 @@ func (bot *RealBot) TestMACD() {
 	notifier.PrintAllOut()
 	if notifier.MsgNumber > 1 {
 		notifier.SendEmail()
+	}
+}
+
+func (bot *RealBot) TestBollinger(atr float64, bollinger []float64, lastKline *model.MyKline, pair string) {
+	notifier := NewNotifier()
+	notifier.AddMsg(bot.DisplayTime(), " Test formacji Bollinger")
+	if bot.Stop.CheckPause("bollinger", lastKline.OpenTime) {
+		return
+	} else {
+		//Short when it exceeds upperband
+		if lastKline.Close > bollinger[0] {
+			notifier.AddMsg(bot.DisplayTime(), "Wejście w bollingery short")
+			stop := lastKline.Close + 1.2*atr
+			profit := lastKline.Close - 2.4*atr
+			percent := 2.4 * atr / lastKline.Close
+			leverage := 0.1 / percent
+			actualPrice := bot.GetTickerPrice(pair)
+			profit = actualPrice * profit
+			stop = actualPrice * stop
+			bot.Stop.SetPause("bollinger", lastKline.OpenTime, 60)
+			bot.MakeCompleteOrder(int(leverage), pair, profit, stop, "SELL")
+		}
+		//Long when it exceeds lowerband
+		if lastKline.Close < bollinger[2] {
+			notifier.AddMsg(bot.DisplayTime(), "Wejście w bollingery long")
+			profit := lastKline.Close + 2.4*atr
+			stop := lastKline.Close - 1.2*atr
+			percent := 2.4 * atr / lastKline.Close
+			leverage := 0.1 / percent
+			actualPrice := bot.GetTickerPrice(pair)
+			profit = actualPrice * profit
+			stop = actualPrice * stop
+			bot.Stop.SetPause("bollinger", lastKline.OpenTime, 60)
+			bot.MakeCompleteOrder(int(leverage), pair, profit, stop, "BUY")
+		}
 	}
 }

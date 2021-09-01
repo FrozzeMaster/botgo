@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/CraZzier/bot/model"
+	"github.com/CraZzier/bot/realbot/stop"
 	rmf "github.com/CraZzier/bot/realbot/utilities"
 	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
@@ -32,6 +33,7 @@ type RealBot struct {
 	ListenKey       string
 	ExchangeInfo    *futures.ExchangeInfo
 	PrecisionTable  [][]int
+	Stop            *stop.Stop
 }
 
 //Initialization is ment to be getting data of user while strating the bot
@@ -42,6 +44,10 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 	bot.CandleLimit = candleLimit
 	bot.FeeMaker = 0.0040
 	bot.FeeTaker = 0.0040
+
+	bot.Stop = &stop.Stop{}
+	bot.Stop.Init("macd", "bollinger")
+
 	bot.GetAccountInfo()
 	bot.GetBalanceInfo()
 	bot.NumberOfActivePositions()
@@ -79,10 +85,6 @@ func (bot *RealBot) Initialization(pairs []string, intervals []string, candleLim
 		macd2 := rmf.MACD(bot.CustomKline[num][0], "close", 18, 13, 25, "5m", 0, 999, pairs[num])
 		bb := rmf.BollingerBands(bot.CustomKline[num][0], 20, "5m", 5.5, 0, 999, pairs[num])
 		atr := rmf.ATR(bot.CustomKline[num][0], 14, "5m", 0, 999, pairs[num])
-		if num == 0 {
-			//for testing indicators
-			//pretty.Println(atr)
-		}
 		var tableOfEMAs []*model.MovingAverage
 		var tableOfMACDs []*model.MACD
 		var tableOfBollingerBands []*model.BollingerBands

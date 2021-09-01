@@ -11,7 +11,8 @@ import (
 //CollectKlinesWS is websocket that every 2000ms gets data from binance server
 func (bot *RealBot) CollectKlinesWS(pair string, interval string, pairIndex int, intervalIndex int, responseChannel5m chan int, responseChannel15m chan int, responseChannel1h chan int) {
 	wsKlineHandler := func(event *futures.WsKlineEvent) {
-		if event.Kline.IsFinal && bot.KlinesData[pairIndex][intervalIndex][len(bot.KlinesData)-1].OpenTime != event.Kline.StartTime {
+		//Adding Kline to the memory
+		if event.Kline.IsFinal {
 			lastKline := rmf.ConvertWsKlineToKline(event.Kline)
 			bot.CustomKline[pairIndex][intervalIndex] = append(bot.CustomKline[pairIndex][intervalIndex], rmf.ToMyKlineSingle(&lastKline))
 			if intervalIndex == 0 {
@@ -24,6 +25,15 @@ func (bot *RealBot) CollectKlinesWS(pair string, interval string, pairIndex int,
 				responseChannel1h <- 1
 			}
 		}
+		if intervalIndex == 0 && pairIndex == 0 {
+			//fmt.Println(event.Time)
+			lastKl := rmf.ConvertWsKlineToKline(event.Kline)
+			lastKline := rmf.ToMyKlineSingle(&lastKl)
+			//Bollinger Formation TEST
+			x, y := bot.CalculateBollinger(lastKline, 20, 5.5, 14, intervalIndex, pairIndex)
+			bot.TestBollinger(x, y, lastKline, pair)
+		}
+
 	}
 	errHandler := func(err error) {
 		fmt.Println(err)

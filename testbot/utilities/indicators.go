@@ -14,6 +14,7 @@ import (
 //----Merge są takie same
 //MovingAverage returns moving average struct
 func MovingAverage(candlesticks []*futures.Kline, whichValue string, interval string, intervalValue int64, startTimestamp int64, stopTimestamp int64, pair string) *model.MovingAverage {
+	//--------Constant SECTION----------------------------------------
 	firstAvailableTimestamp := candlesticks[0].OpenTime
 	var miliInterval int64
 	//Checking range if it doestn exceed the candlesticks
@@ -37,7 +38,7 @@ func MovingAverage(candlesticks []*futures.Kline, whichValue string, interval st
 		log.Fatal("Not in range")
 	}
 	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
-
+	//-------------End of constants section----------------------------
 	//Declaring variables needed to return moving Average Object
 	var fullMoving model.MovingAverage
 	fullMoving.StartTimestamp = startTimestamp
@@ -104,6 +105,7 @@ func MovingAverage(candlesticks []*futures.Kline, whichValue string, interval st
 
 //RSI returns moving rsi struct
 func RSI(candlesticks []*futures.Kline, whichValue string, interval string, intervalValue int64, startTimestamp int64, stopTimestamp int64, pair string) *model.RSI {
+	//--------Constant SECTION----------------------------------------
 	firstAvailableTimestamp := candlesticks[0].OpenTime
 	var miliInterval int64
 	//Checking range if it doestn exceed the candlesticks
@@ -127,7 +129,7 @@ func RSI(candlesticks []*futures.Kline, whichValue string, interval string, inte
 		log.Fatal("Not in range")
 	}
 	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
-
+	//-------------End of constants section----------------------------
 	//Declaring variables needed to return moving Average Object
 	var fullMoving model.RSI
 	fullMoving.StartTimestamp = startTimestamp
@@ -232,6 +234,7 @@ func RSI(candlesticks []*futures.Kline, whichValue string, interval string, inte
 
 //EmovingAverage retursn Exponential moving average
 func EmovingAverage(candlesticks []*futures.Kline, whichValue string, interval string, intervalValue int64, startTimestamp int64, stopTimestamp int64, pair string) *model.MovingAverage {
+	//--------Constant SECTION----------------------------------------
 	firstAvailableTimestamp := candlesticks[0].OpenTime
 	var miliInterval int64
 	//Checking range if it doestn exceed the candlesticks
@@ -259,6 +262,7 @@ func EmovingAverage(candlesticks []*futures.Kline, whichValue string, interval s
 		log.Fatal("Not in range", interval)
 	}
 	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
+	//-------------End of constants section----------------------------
 	//Getting sma data and setting first EMA
 	smatable := MovingAverage(candlesticks, whichValue, interval, intervalValue, startTimestamp, stopTimestamp, pair)
 	var Ema model.MovingAverage
@@ -351,6 +355,7 @@ func MACD(candlesticks []*futures.Kline, whichValue string, signalValue1 int64, 
 
 //BollingerBands
 func BollingerBands(candlesticks []*futures.Kline, smaValue int64, interval string, bandValue float64, startTimestamp int64, stopTimestamp int64, pair string) *model.BollingerBands {
+	//--------Constant SECTION----------------------------------------
 	firstAvailableTimestamp := candlesticks[0].OpenTime
 	var miliInterval int64
 	//Checking range if it doestn exceed the candlesticks
@@ -374,6 +379,7 @@ func BollingerBands(candlesticks []*futures.Kline, smaValue int64, interval stri
 		log.Fatal("Not in range")
 	}
 	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
+	//-------------End of constants session----------------------------
 	//Getting sma data and declaring containers
 	smatable := MovingAverage(candlesticks, "close", interval, smaValue, int64(indexstart), int64(indexstop), pair)
 	smaiterator := 0
@@ -415,6 +421,7 @@ func BollingerBands(candlesticks []*futures.Kline, smaValue int64, interval stri
 
 //ATR
 func ATR(candlesticks []*futures.Kline, ATRValue int64, interval string, startTimestamp int64, stopTimestamp int64, pair string) *model.ATR {
+	//--------Constant SECTION----------------------------------------
 	firstAvailableTimestamp := candlesticks[0].OpenTime
 	var miliInterval int64
 	//Checking range if it doestn exceed the candlesticks
@@ -438,6 +445,7 @@ func ATR(candlesticks []*futures.Kline, ATRValue int64, interval string, startTi
 		log.Fatal("Not in range")
 	}
 	indexstart, indexstop := GetStartStopCandles(candlesticks, startTimestamp, stopTimestamp)
+	//-------------End of constants session----------------------------
 	var ATR model.ATR
 	var ATRStamps []*model.SingleATRStamp
 
